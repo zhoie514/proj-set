@@ -21,4 +21,8 @@ error
 成功
 最好
 错误
+什么
+以及
+一下
+这个
 jumpserver
