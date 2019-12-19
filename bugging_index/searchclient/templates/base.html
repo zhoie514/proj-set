@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<title>{% block title %} block title{% endblock %}</title>
+
+<link rel="stylesheet" href="{{ url_for('static',filename='base/base.css') }}">
+<script src="{{ url_for('static',filename='base/jquery-1.11.3.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static',filename='base/base.js') }}" type="text/javascript"></script>
+
+{% block script %}
+{% endblock %}
+<body>
+{#顶部预留的区域#}
+<div class="fill-black"></div>
+
+{#三个导航#}
+<div class="title-index">
+    <table class="tb-index">
+        <tr>
+            <th><a href="/search/err">Error List</a></th>
+            <th><a href="/search/qa">Q and A</a></th>
+            <th><a href="/search/ocr-map">Ocr-Map</a></th>
+            <th class="rightside"><a href="/sys">SYS</a></th>
+        </tr>
+    </table>
+</div>
+
+{#搜索框#}
+{% block search %}
+    <div class="search-aera">
+        <input class="search-in" value="{{ kw }}">
+        <input type="button" class="search-bt" value="搜索">
+    </div>
+{% endblock %}
+
+{#显示每个具体模块具体内容区域#}
+<div class="show-aera">
+    {% block show %} block show {% endblock %}
+</div>
+
+{#翻页区域#}
+<div class="page">
+    {% block page %}
+    {% endblock %}
+</div>
+
+{#显示页数的区域#}
+<div class="page-info">
+    {% block pageinfo %}
+    {% endblock %}
+</div>
+
+<script>
+
+</script>
+</body>

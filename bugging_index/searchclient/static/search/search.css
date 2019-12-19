@@ -1,0 +1,16 @@
+ input{
+    border: 1px solid gray;
+    padding: 2px;
+}
+
+textarea{
+    text-align: center;
+    border: 1px solid gray;
+    width: 205px;
+    height: 100px;
+}
+
+div.confirm{
+    text-align: center;
+    margin: 20px 20px 5px 20px;
+}

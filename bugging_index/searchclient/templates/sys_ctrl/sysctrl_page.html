@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}
+    SYS
+{% endblock %}
+
+{% block search %}
+{% endblock %}
+
+{% block show %}
+    <div class="sys-lst" style="text-align:center;margin: 50px auto">
+        <ul>
+            <li><a href="reverse-index/err"><b>重建Error List索引</b></a></li>
+            <li> -</li>
+            <li><a href="reverse-index/qa"><b>重建Q and A索引</b></a></li>
+            <li> -</li>
+            <li><a href="backup"><b>备份数据库</b></a>
+
+            <li> -</li>
+            <li><a href="init/db"><b>还原数据库</b></a></li>
+            <li> -</li>
+            <li><a href="#"><b>将csv导入数据库并构建索引</b></a></li>
+        </ul>
+
+    </div>
+
+
+{% endblock %}

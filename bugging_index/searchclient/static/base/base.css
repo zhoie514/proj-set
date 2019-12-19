@@ -1,0 +1,135 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-decoration: none;
+    border: 0;
+    color: black;
+    border-collapse: collapse;
+}
+
+body{
+    background-color: rgba(220, 220, 220, 0.2);
+}
+textarea{
+    vertical-align:center;
+}
+a {
+    text-decoration: underline dimgray;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+}
+
+div.fill-black {
+    margin: 10px 15px 10px 15px;
+    height: 50px;
+    width: auto;
+    /*background-color: #0fccff;*/
+}
+
+div.title-index {
+    margin: 5px 15px 5px 15px;
+    width: auto;
+    height: 40px;
+}
+
+table.tb-index {
+    margin: auto;
+    width: 600px;
+}
+
+table.tb-index th {
+    width: 60px;
+    height: 40px;
+    text-align: center;
+    background-color: antiquewhite;
+    border-left: 1px solid gray;
+}
+
+div.show-aera {
+    margin: 5px 20px 5px 20px;
+    width: auto;
+}
+
+div.page {
+    margin: 5px 20px 5px 20px;
+    height: 30px;
+    text-align: center;
+}
+
+input#jump-to {
+    border: 0.5px solid gray;
+    height: 20px;
+    width: 30px;
+    text-align: center;
+}
+
+div.page-info {
+    margin: 5px 20px 5px 20px;
+    height: 30px;
+    text-align: center;
+}
+
+div.page-info a {
+    margin-left: 10px;
+}
+
+table.contents {
+    margin: 50px auto 10px auto;
+    width: auto;
+    height: auto;
+}
+
+table.contents th {
+    padding-left: 3px;
+    padding-right: 3px;
+    text-align: center;
+    border-top: 1px solid gray;
+    border-bottom: 1px solid gray;
+    border-left: 1px solid gray;
+}
+
+table.contents td {
+    padding: 3px 3px 3px 3px;
+    text-align: center;
+    border-bottom: 1px solid gray;
+    border-left: 1px solid gray;
+}
+
+*.rightside {
+    border-right: 1px solid gray;
+    width: auto;
+}
+
+
+div.search-aera {
+    margin: 30px auto 5px auto;
+    text-align: center;
+}
+
+input.search-in {
+    line-height: 30px;
+    width: 150px;
+    height: 30px;
+    margin-left: -5px;
+    border: 1px solid gray;
+    text-align: center;
+    border-radius: 5px;
+}
+
+input.search-bt {
+    border: 1px solid gray;
+    width: 50px;
+    height: 30px;
+    border-radius: 5px;
+}
+
+button {
+    border: 1px solid gray;
+    width: 50px;
+    height: 30px;
+    border-radius: 5px;
+}

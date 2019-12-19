@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block script %}
+    <link rel="stylesheet" href="{{ url_for('static',filename='search/search.css') }}">
+{% endblock %}
+
+{% block title %} Records{% endblock %}
+{% block search %} {% endblock %}
+{% block show %}
+    <table class="contents">
+        <tr>
+            <th>No</th>
+            <th>Orign</th>
+            <th>Describe</th>
+            <th>Interface</th>
+            <th>Mask</th>
+            <th>Category</th>
+            <th>ErrorInfo</th>
+            <th>LogSearch</th>
+            <th class="rightside">Procedure</th>
+            {#            <th>操作</th>#}
+        </tr>
+        {% for item in res %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ item[1] }} </td>
+                <td>{{ item[2] }}</td>
+                <td>{{ item[3] }} </td>
+                <td>{{ item[4] }}</td>
+                <td>{{ item[5] }}</td>
+                <td>{{ item[6] }}</td>
+                <td>{{ item[7] }}</td>
+                <td class="rightside"> {{ item[8] }}</td>
+                {#                <td><a href="err/{{ item[0] }}">修改</a>---<a href="">删除</a></td>#}
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
+
+{% block page %}
+{% endblock %}
+
+{% block pageinfo %}
+{% endblock %}

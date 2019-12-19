@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block script %}
+    {#    <link rel="stylesheet" href="{{ url_for('static',filename='search/search.css') }}">#}
+{% endblock %}
+{#窗口标题#}
+{% block title %} OCR-Map Records{% endblock %}
+
+
+{#搜索框-继承自base.html#}
+{% block search %}
+{% endblock %}
+
+
+{#模块内具体显示的内容#}
+{% block show %}
+    <form enctype="application/x-www-form-urlencoded" action="" method="post">
+        <table class="contents">
+            <tr>
+                <th>No</th>
+                <th>Type</th>
+                <th>Code</th>
+                <th>Msg</th>
+                <th class="rightside">Operate</th>
+            </tr>
+            {% for item in res %}
+                <tr>
+                    {# 计算序号 #}
+                    <td>{{ loop.index + (pg - 1) * 20 }}</td>
+                    <td>{{ item[1] }} </td>
+                    <td>{{ item[2] }}</td>
+                    <td>{{ item[3] }}</td>
+                    <td class="rightside"><a href="#">删除</a></td>
+                </tr>
+            {% endfor %}
+            {% if not kw %}
+                <tr>
+                    <td>New</td>
+                    <td><input type="text" name="type" value=""></td>
+                    <td><input type="text" name="code" value="" placeholder="必填"></td>
+                    <td><input type="text" name="msg" value="" placeholder="必填"></td>
+                    <td class="rightside">
+                        <button>添加</button>
+                    </td>
+                </tr>
+            {% endif %}
+        </table>
+    </form>
+{% endblock %}
+
+{#翻页区域#}
+{% block page %}
+    {% if pg > 1 %}
+        <a id="pageup" href="ocr-map?pg={{ pg - 1 }}">上一页</a>
+    {% endif %}
+
+    <input id="jump-to" name="jump" value="{{ pg }}">
+    {% if all_page > 2 %}
+        <button>跳转</button>
+    {% endif %}
+    {% if pg < all_page %}
+        <a id="pagedown" href="ocr-map?pg={{ pg + 1 }}">下一页</a>
+    {% endif %}
+
+{% endblock %}
+
+{#显示页数的区域,参数中的 20 为每页的条数#}
+{% block pageinfo %}
+    {% if all_page > 1 %}
+        {% for i in range(1,all_page + 1) %}
+            <a href="ocr-map?pg={{ i }}">{{ i }}</a>
+        {% endfor %}
+    {% endif %}
+{% endblock %}

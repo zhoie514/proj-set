@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block script %}
+    <link rel="stylesheet" href="{{ url_for('static',filename='search/search.css') }}">
+{% endblock %}
+
+
+{#窗口标题#}
+{% block title %} Q&A Edit{% endblock %}
+
+
+{#搜索框-继承自base.html#}
+{% block search %}
+{% endblock %}
+
+
+{#模块内具体显示的内容#}
+{% block show %}
+    <form enctype="application/x-www-form-urlencoded" action="{{ id }}" method="post">
+        <table class="contents">
+            <tr>
+                <th>Id</th>
+                <th>Q</th>
+                <th class="rightside">A</th>
+            </tr>
+            {% for item in res %}
+                <tr>
+                    <td>{{ item[0] }}<input type="hidden" name="id" value="{{ item[0] }}"></td>
+                    <td><TEXTAREA name="ques" style="width:400px;height: 200px;border:none;">{{ item[2] }}</TEXTAREA></td>
+                    <td class="rightside"><textarea name="ans" style="width:400px;height: 200px;border:none;">{{ item[3] }}</textarea></td>
+                    {#                <td><a href="err/{{ item[0] }}">修改</a>---<a href="">删除</a></td>#}
+                </tr>
+            {% endfor %}
+        </table>
+        <div class="confirm">
+            <input type="submit" value="保存">
+{#            <input type="button" value="撤消">#}
+        </div>
+    </form>
+{% endblock %}
+
+{#翻页区域#}
+{% block page %}
+{% endblock %}
+
+{#显示页数的区域,参数中的 20 为每页的条数#}
+{% block pageinfo %}
+{% endblock %}
