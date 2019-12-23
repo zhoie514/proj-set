@@ -112,12 +112,13 @@ div.search-aera {
 
 input.search-in {
     line-height: 30px;
-    width: 150px;
+    width: 300px;
     height: 30px;
     margin-left: -5px;
     border: 1px solid gray;
     text-align: center;
     border-radius: 5px;
+    padding:0 10px 0 10px
 }
 
 input.search-bt {

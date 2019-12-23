@@ -1,15 +1,19 @@
-import os
-import jieba
-from searchclient.db import get_db
-from instance import config
 import csv
+import os
+
+import jieba
+
+from instance import config
+from searchclient.db import get_db
 
 with open(config.DEL_WORDS, 'r', encoding="utf8") as f:
-    del_words = f.read()
-jieba.del_word(del_words)
+    del_words = f.readlines()
+    for item in del_words:
+        jieba.del_word(item.strip())
 with open(config.ADD_WORDS, 'r', encoding="utf8") as f:
-    add_words = f.read()
-jieba.add_word(add_words)
+    add_words = f.readlines()
+    for item in add_words:
+        jieba.add_word(item.strip())
 
 
 def init_err(dir):
@@ -59,7 +63,7 @@ def init_index_err():
     for content in contents:
         l = []
         new_l = []
-        content.pop(1)
+        # content.pop(1)
         for item in content[1:]:
             l += jieba.cut_for_search(item)
         for item in l:
@@ -98,3 +102,34 @@ def init_index_qa():
         db.executemany("insert into qanda_index (r_content,r_id) values (?, ?);", con_id)
         db.commit()
     return True
+
+
+# sys-ctrl utils
+
+def cut(contents: list):
+    con_id = []
+    for content in contents:
+        l = []
+        new_l = []
+        for item in content[1:]:
+            l += jieba.cut_for_search(item)
+        for item in l:
+            if len(item) > 1:
+                new_l.append(item)
+        res = set(new_l)
+        for item in res:
+            con_id.append((item, content[0]))
+    con_id = tuple(con_id)
+    return con_id
+
+
+def cut_kw(kw: str):
+    res = jieba.cut_for_search(kw)
+    return res
+
+
+# res = cut([["","我们以及url老师"]])
+# print(res)
+#
+# res = jieba.cut_for_search("我们以及url老师")
+# print(list(res))

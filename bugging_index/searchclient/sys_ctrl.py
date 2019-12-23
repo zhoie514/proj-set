@@ -1,9 +1,10 @@
-import os
 import csv
-import jieba
+import os
+
 from flask import (Blueprint, render_template, redirect, url_for, current_app)
+
+from instance.config import (REBUILD, BACKUP, BACKUP_DIR, INIT)
 from searchclient.db import get_db
-from instance.config import (REBUILD, DEL_WORDS, BACKUP, BACKUP_DIR, INIT)
 from . import init_server_db as initdb
 
 bp = Blueprint("sys", __name__, url_prefix="/sys")
@@ -25,28 +26,12 @@ def rebuild_index(name):
         return {"code": 200, "msg": "Error Name"}
 
     if REBUILD:
-        with open(DEL_WORDS, 'r', encoding="utf8") as f:
-            del_words = f.read()
-        jieba.del_word(del_words)
         db = get_db()
         select_sql = "select * from {}".format(name)
         contents = db.execute(select_sql).fetchall()
         if not contents:
             return {"code": 200, "msg": "blank Database"}
-        con_id = []
-        for content in contents:
-            l = []
-            new_l = []
-            for item in content[1:]:
-                l += jieba.cut_for_search(item)
-            for item in l:
-                if len(item) > 1:
-                    new_l.append(item)
-            res = set(new_l)
-            for item in res:
-                con_id.append((item, content[0]))
-        con_id = tuple(con_id)
-
+        con_id = initdb.cut(contents)
         if name == "errorlist":
             db.execute("delete from err_index")
             db.executemany("insert into err_index (r_content,r_id) values (?, ?);", con_id)
@@ -79,10 +64,11 @@ def backup():
         db = get_db()
         select_sql = "select * from {}".format(name)
         contents = db.execute(select_sql).fetchall()
-        with open(os.path.join(BACKUP_DIR, "{}.csv".format(name)), "w", newline="") as f:
+        with open(os.path.join(BACKUP_DIR, "{}.csv".format(name)), "w+", newline="") as f:
             writer = csv.writer(f)
             # for item in contents:
             writer.writerows(contents)
+            f.flush()
     return {"code": 200, "msg": "done"}
 
 

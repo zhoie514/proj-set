@@ -52,8 +52,9 @@
     {% if pg > 1 %}
         <a id="pageup" href="qa?pg={{ pg - 1 }}&kw={{ kw }}">上一页</a>
     {% endif %}
-
-    <input id="jump-to" name="jump" value="{{ pg }}">
+    {% if all_page > 1 %}
+        <input id="jump-to" name="jump" value="{{ pg }}">
+    {% endif %}
     {% if all_page > 2 %}
         <button>跳转</button>
     {% endif %}

@@ -1,9 +1,9 @@
 import random
 
-import jieba
 from flask import (Blueprint, render_template, request, redirect, url_for)
 
 from searchclient.db import get_db
+from . import init_server_db as initdb
 
 bp = Blueprint("search", __name__, url_prefix="/search")
 
@@ -49,18 +49,15 @@ def se_err():
             r_id = []
             for key in key_words:
                 r_id.append(db.execute("select r_id from err_index where r_content = ?", (key,)).fetchall())
-            # 将这些id去重 有可能 r_id中有 None
-            tmp = set()
+            # 将这些id去重,且保持原id顺序 有可能 r_id中有 None
+            tmp = []
             for item in r_id:
                 if isinstance(item, (list, tuple)):
                     for i in item:
-                        tmp.add(i)
-
+                        if i not in tmp:
+                            tmp.append(i)
             all_pg = int((len(tmp) + 20 - 1) / 20)
-            tmp = list(tmp)
-            print("all_pg", all_pg)
-
-            # 取出去重后的tmp 中的id 对应的所有记录
+            # 取出去重后的tmp 中的有序id 查出对应的所有记录
             res_all = []
             for i in tmp:
                 one_record = db.execute("select * from errorlist where id = ?", (i['r_id'],)).fetchone()
@@ -255,14 +252,20 @@ def get_eles(tb_name: str):
 
 
 def kw_deal(kw: str) -> list:
-    # 将 kw 利用jieba分词进行处理 处理成 [a,b,c,]"的形式,
-    from instance import config
-    with open(config.DEL_WORDS, 'r', encoding="utf8") as f:
-        del_words = f.read()
-    jieba.del_word(del_words)
     lst = []
-    for item in jieba.cut_for_search(kw):
+    # 首先按空格分,并排一次序,长度长的在前面
+    for item in kw.split():
+        lst.append(item)
+    # 将 kw 利用jieba分词进行处理 处理成 [a,b,c,]"的形式,
+    lst2 = []
+    for item in initdb.cut_kw(kw):
         if len(item) > 1:
-            lst.append(item)
-    return lst
+            lst2.append(item)
+    for item in lst2:
+        lst.append(item)
+    lst = set(lst)
+    lst = list(lst)
+    lst.sort(key=lambda i: len(i), reverse=True)
 
+    print(lst)
+    return lst
