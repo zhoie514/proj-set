@@ -9,32 +9,91 @@
 {% block search %} {% endblock %}
 {% block show %}
     <table class="contents">
-        <tr>
-            <th>No</th>
-            <th>Orign</th>
-            <th>Describe</th>
-            <th>Interface</th>
-            <th>Mask</th>
-            <th>Category</th>
-            <th>ErrorInfo</th>
-            <th>LogSearch</th>
-            <th class="rightside">Procedure</th>
-            {#            <th>操作</th>#}
-        </tr>
-        {% for item in res %}
+        {% if kind == "errorlist" %}
             <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ item[1] }} </td>
-                <td>{{ item[2] }}</td>
-                <td>{{ item[3] }} </td>
-                <td>{{ item[4] }}</td>
-                <td>{{ item[5] }}</td>
-                <td>{{ item[6] }}</td>
-                <td>{{ item[7] }}</td>
-                <td class="rightside"> {{ item[8] }}</td>
-                {#                <td><a href="err/{{ item[0] }}">修改</a>---<a href="">删除</a></td>#}
+                <th>No</th>
+                <th>Orign</th>
+                <th>Describe</th>
+                <th>Interface</th>
+                <th>Mask</th>
+                <th>Category</th>
+                <th>ErrorInfo</th>
+                <th>LogSearch</th>
+                <th class="rightside">Procedure</th>
+                {#            <th>操作</th>#}
             </tr>
-        {% endfor %}
+            {% for item in res %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ item[1] }} </td>
+                    <td>{{ item[2] }}</td>
+                    <td>{{ item[3] }} </td>
+                    <td>{{ item[4] }}</td>
+                    <td>{{ item[5] }}</td>
+                    <td>{{ item[6] }}</td>
+                    <td>{{ item[7] }}</td>
+                    <td class="rightside"> {{ item[8] }}</td>
+                    {#                <td><a href="err/{{ item[0] }}">修改</a>---<a href="">删除</a></td>#}
+                </tr>
+            {% endfor %}
+        {% endif %}
+
+        {% if kind == "qanda" %}
+            <tr>
+                <th>No</th>
+                <th>Origin</th>
+                <th>Q</th>
+{#                <th>Interface</th>#}
+{#                <th>Mask</th>#}
+{#                <th>Category</th>#}
+{#                <th>ErrorInfo</th>#}
+{#                <th>LogSearch</th>#}
+                <th class="rightside">A</th>
+                {#            <th>操作</th>#}
+            </tr>
+            {% for item in res %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ item[1] }} </td>
+                    <td>{{ item[2] }}</td>
+{#                    <td>{{ item[3] }} </td>#}
+{#                    <td>{{ item[4] }}</td>#}
+{#                    <td>{{ item[5] }}</td>#}
+{#                    <td>{{ item[6] }}</td>#}
+{#                    <td>{{ item[7] }}</td>#}
+                    <td class="rightside"> {{ item[2] }}</td>
+                    {#                <td><a href="err/{{ item[0] }}">修改</a>---<a href="">删除</a></td>#}
+                </tr>
+            {% endfor %}
+        {% endif %}
+        {% if kind == "ocrmap" %}
+            <tr>
+                <th>No</th>
+                <th>Type</th>
+                <th>Code</th>
+{#                <th>Msg</th>#}
+{#                <th>Mask</th>#}
+{#                <th>Category</th>#}
+{#                <th>ErrorInfo</th>#}
+{#                <th>LogSearch</th>#}
+                <th class="rightside">Msg</th>
+                {#            <th>操作</th>#}
+            </tr>
+            {% for item in res %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ item[1] }} </td>
+                    <td>{{ item[2] }}</td>
+{#                    <td>{{ item[3] }} </td>#}
+{#                    <td>{{ item[4] }}</td>#}
+{#                    <td>{{ item[5] }}</td>#}
+{#                    <td>{{ item[6] }}</td>#}
+{#                    <td>{{ item[7] }}</td>#}
+                    <td class="rightside"> {{ item[3] }}</td>
+                    {#                <td><a href="err/{{ item[0] }}">修改</a>---<a href="">删除</a></td>#}
+                </tr>
+            {% endfor %}
+        {% endif %}
     </table>
 {% endblock %}
 

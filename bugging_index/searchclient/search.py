@@ -1,6 +1,9 @@
-from flask import (Blueprint, render_template, request, redirect, url_for)
-from searchclient.db import get_db
+import random
+
 import jieba
+from flask import (Blueprint, render_template, request, redirect, url_for)
+
+from searchclient.db import get_db
 
 bp = Blueprint("search", __name__, url_prefix="/search")
 
@@ -8,16 +11,18 @@ bp = Blueprint("search", __name__, url_prefix="/search")
 @bp.route("/test")
 def tt():
     #  一个测试请求的函数
-    db = get_db()
-    res = [1, 2]
+    # db = get_db()
+    # res = [1, 2]
     return render_template("base.html")
 
 
 @bp.route("/", methods=("get",))
 def homepage():
-    # 随机显示三个项目中的某一个,随机显示条数
-    res = error_list_random()
-    return render_template("search/homepage.html", res=res)
+    # 随机显示三个项目中的某一个
+    kind = random.choice(("errorlist", "ocrmap", "qanda"))
+    res = get_eles(kind)
+    # res = get_eles(random.choice(("errorlist",)))
+    return render_template("search/homepage.html", res=res, kind=kind)
 
 
 @bp.route("/err", methods=("get", "post"))
@@ -38,7 +43,7 @@ def se_err():
             # 取出指定条数
             cur = db.execute("select *  from errorlist limit {}, 20 ".format((pg - 1) * 20))
             res = cur.fetchall()
-        if kw:
+        else:
             key_words = kw_deal(kw)
             # 查出每一个关键字对应的主表中的id
             r_id = []
@@ -104,7 +109,7 @@ def se_qa():
             # 取出指定条数
             cur = db.execute("select *  from qanda limit {}, 20 ".format((pg - 1) * 20))
             res = cur.fetchall()
-        if kw:
+        else:
             key_words = kw_deal(kw)
             # 查出每一个关键字对应的主表中的id
             r_id = []
@@ -230,10 +235,10 @@ def ch_qa(id):
 
 
 # utils
-def error_list_random():
+def get_eles(tb_name: str):
     # 随机取不大于20条记录进行显示
     db = get_db()
-    cur = db.execute('select id from errorlist')
+    cur = db.execute('select id from {}'.format(tb_name))
     all_id = set(cur.fetchall())
     id_lst = []
     try:
@@ -243,7 +248,7 @@ def error_list_random():
         pass
     res = []
     for item in id_lst:
-        cur = db.execute("select * from errorlist where id ={}".format(item))
+        cur = db.execute("select * from {} where id ={}".format(tb_name, item))
         res += cur.fetchall()
     db.close()
     return res
@@ -260,3 +265,4 @@ def kw_deal(kw: str) -> list:
         if len(item) > 1:
             lst.append(item)
     return lst
+
