@@ -29,7 +29,9 @@
                     <td>{{ item[3] }}</td>
                     <td class="rightside">
                         <li><a href="qa/{{ item[0] }}">修改</a></li>
-                        <li><a href="">删除</a></li>
+                        <li>
+                            <a class="del_record" href="javascript:void(0)" uin="{{ item[0] }}">删除</a>
+                        </li>
                     </td>
                 </tr>
             {% endfor %}

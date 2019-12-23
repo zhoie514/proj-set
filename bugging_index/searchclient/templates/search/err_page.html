@@ -42,7 +42,7 @@
                     <td>{{ item[8] }}</td>
                     <td class="rightside">
                         <li><a href="err/{{ item[0] }}">修改</a></li>
-                        <li><a href="">删除</a></li>
+                        <li><a href="javascript:void(0)" class="del_record" uin="{{ item[0] }}">删除</a></li>
                     </td>
                 </tr>
             {% endfor %}

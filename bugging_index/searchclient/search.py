@@ -1,20 +1,12 @@
 import random
 
 from flask import (Blueprint, render_template, request, redirect, url_for)
+from flask_cors import cross_origin
 
 from searchclient.db import get_db
 from . import init_server_db as initdb
 
 bp = Blueprint("search", __name__, url_prefix="/search")
-
-
-@bp.route("/test")
-def tt():
-    #  一个测试请求的函数
-    # db = get_db()
-    # res = [1, 2]
-    return render_template("base.html")
-
 
 @bp.route("/", methods=("get",))
 def homepage():
@@ -174,7 +166,8 @@ def se_ocr():
 
 
 # 修改及删除
-@bp.route("/err/<id>", methods=["get", "pOST", "del"])
+@bp.route("/err/<id>", methods=["get", "POST", "delete"])
+@cross_origin()
 def ch_err(id):
     try:
         id = int(id)
@@ -202,9 +195,18 @@ def ch_err(id):
         db.execute(sql, (e_describe, e_category, e_errorinfo, e_logsearch, e_procedure, id))
         db.commit()
         return {"status": 200, "msg": "OK"}
+    if request.method == "DELETE":
+        db = get_db()
+        try:
+            db.execute("delete from errorlist where id=?", (id,)).fetchone()
+            db.commit()
+        except Exception as e:
+            return {"code": 501, "error": "删除失败,请刷新后重试"}
+        return {"code": 200, "msg": "succ"}
 
 
-@bp.route("/qa/<id>", methods=["get", "POST", "DEL"])
+@bp.route("/qa/<id>", methods=["get", "POST", "DELete"])
+@cross_origin()
 def ch_qa(id):
     try:
         id = int(id)
@@ -229,6 +231,34 @@ def ch_qa(id):
         db.execute(sql, (q_ques, q_ans, id))
         db.commit()
         return redirect(url_for("search.ch_qa", id=id))
+    if request.method == "DELETE":
+        db = get_db()
+        try:
+            db.execute("delete from qanda where id=?", (id,)).fetchone()
+            db.commit()
+        except Exception as e:
+            return {"code": 501, "error": "删除失败,请刷新后重试"}
+        return {"code": 200, "msg": "succ"}
+
+
+@bp.route("/ocr-map/<id>", methods=["DELete"])
+@cross_origin()
+def ch_ocr(id):
+    try:
+        id = int(id)
+    except Exception as e:
+        return "404"
+    if request.method == "DELETE":
+        db = get_db()
+        try:
+            db.execute("delete from ocrmap where id=?", (id,)).fetchone()
+            db.commit()
+        except Exception as e:
+            return {"code": 501, "error": "删除失败,请刷新后重试"}
+        return {"code": 200, "msg": "succ"}
+
+
+# 删除
 
 
 # utils
