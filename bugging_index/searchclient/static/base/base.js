@@ -39,7 +39,7 @@ $(function () {
                     alert("Done");
                     location.reload()
                 } else {
-                    alert("发生错误,请刷新页面后重试")
+                    alert("删除失败:暂不允许删除.")
                 }
             }
         })

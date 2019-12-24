@@ -3,6 +3,7 @@ import random
 from flask import (Blueprint, render_template, request, redirect, url_for)
 from flask_cors import cross_origin
 
+from instance.config import DEL_RECORD
 from searchclient.db import get_db
 from . import init_server_db as initdb
 
@@ -196,6 +197,8 @@ def ch_err(id):
         db.commit()
         return {"status": 200, "msg": "OK"}
     if request.method == "DELETE":
+        if not DEL_RECORD:
+            return "404"
         db = get_db()
         try:
             db.execute("delete from errorlist where id=?", (id,)).fetchone()
@@ -232,6 +235,8 @@ def ch_qa(id):
         db.commit()
         return redirect(url_for("search.ch_qa", id=id))
     if request.method == "DELETE":
+        if not DEL_RECORD:
+            return "404"
         db = get_db()
         try:
             db.execute("delete from qanda where id=?", (id,)).fetchone()
@@ -246,6 +251,8 @@ def ch_qa(id):
 def ch_ocr(id):
     try:
         id = int(id)
+        if  not DEL_RECORD :
+            return "404"
     except Exception as e:
         return "404"
     if request.method == "DELETE":
@@ -296,6 +303,4 @@ def kw_deal(kw: str) -> list:
     lst = set(lst)
     lst = list(lst)
     lst.sort(key=lambda i: len(i), reverse=True)
-
-    print(lst)
     return lst
