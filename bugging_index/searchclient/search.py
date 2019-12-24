@@ -9,12 +9,12 @@ from . import init_server_db as initdb
 
 bp = Blueprint("search", __name__, url_prefix="/search")
 
+
 @bp.route("/", methods=("get",))
 def homepage():
     # 随机显示三个项目中的某一个
     kind = random.choice(("errorlist", "ocrmap", "qanda"))
     res = get_eles(kind)
-    # res = get_eles(random.choice(("errorlist",)))
     return render_template("search/homepage.html", res=res, kind=kind)
 
 
