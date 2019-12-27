@@ -1,0 +1,4 @@
+include searchclient/buildDatabase.sql
+graft searchclient/static
+graft searchclient/templates
+global-exclude *.pyc

@@ -18,4 +18,4 @@ BACKUP_DIR = r"C:\Users\zhouhao\github\proj-set\bugging_index\searchclient\stati
 INIT = True
 
 # 允许删除记录
-DEL_RECORD = False
+DEL_RECORD = True
