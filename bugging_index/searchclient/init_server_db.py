@@ -65,7 +65,9 @@ def init_index_err():
         new_l = []
         # content.pop(1)
         for item in content[1:]:
-            l += jieba.cut_for_search(item)
+            # 如果item是空字段,jieba.cut会报错
+            if item:
+                l += jieba.cut_for_search(item)
         for item in l:
             if len(item) > 1:
                 new_l.append(item)
