@@ -8,7 +8,7 @@ ADD_WORDS = r"C:\Users\zhouhao\github\proj-set\bugging_index\searchclient\static
 REBUILD = True
 
 # 是否允许备份
-BACKUP = True
+BACKUP = False
 BACKUP_DIR = r"C:\Users\zhouhao\github\proj-set\bugging_index\searchclient\static\csv"
 
 # 是否允许从CSV导入
