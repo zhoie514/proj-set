@@ -18,7 +18,7 @@ with open(config.ADD_WORDS, 'r', encoding="utf8") as f:
 
 def init_err(dir):
     db = get_db()
-    with open(os.path.join(dir, 'errorlist.csv'), 'r') as f:
+    with open(os.path.join(dir, 'errorlist.csv'), 'r', encoding="utf8") as f:
         contents = csv.reader(f)
         for content in contents:
             db.execute(
@@ -31,7 +31,7 @@ def init_err(dir):
 
 def init_ocrmap(dir):
     db = get_db()
-    with open(os.path.join(dir, 'ocrmap.csv'), 'r') as f:
+    with open(os.path.join(dir, 'ocrmap.csv'), 'r', encoding="utf8") as f:
         contents = csv.reader(f)
         for content in contents:
             db.execute(
@@ -43,7 +43,7 @@ def init_ocrmap(dir):
 
 def init_qa(dir):
     db = get_db()
-    with open(os.path.join(dir, 'qanda.csv'), 'r') as f:
+    with open(os.path.join(dir, 'qanda.csv'), 'r', encoding="utf8") as f:
         contents = csv.reader(f)
         for content in contents:
             db.execute(
@@ -92,7 +92,9 @@ def init_index_qa():
         l = []
         new_l = []
         for item in content[1:]:
-            l += jieba.cut_for_search(item)
+            #  同上
+            if item:
+                l += jieba.cut_for_search(item)
         for item in l:
             if len(item) > 1:
                 new_l.append(item)
@@ -114,7 +116,8 @@ def cut(contents: list):
         l = []
         new_l = []
         for item in content[1:]:
-            l += jieba.cut_for_search(item)
+            if item:
+                l += jieba.cut_for_search(item)
         for item in l:
             if len(item) > 1:
                 new_l.append(item)

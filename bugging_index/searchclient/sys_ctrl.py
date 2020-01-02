@@ -4,6 +4,7 @@ import os
 from flask import (Blueprint, render_template, redirect, url_for, current_app)
 from instance.config import (REBUILD, BACKUP, BACKUP_DIR, INIT)
 from searchclient.db import get_db
+from flask_cors import cross_origin
 
 from . import init_server_db as initdb
 
@@ -16,6 +17,7 @@ def tt():
 
 
 @bp.route("/reverse-index/<name>")
+@cross_origin()
 def rebuild_index(name):
     # 重建索引, 将索引数据库删掉,重建,此接口可以做成ajax请求,数据多的情况下返回较慢
     if name == "err":
@@ -48,6 +50,7 @@ def rebuild_index(name):
 
 
 @bp.route("/backup")
+@cross_origin()
 def backup():
     # 将数据库的数据全部导出为 csv文件,通过ip:port/static/csv/errorlist[qanda/ocrmap]可以下载
     # 也可以做成ajax来访问,备份虽然很快
@@ -76,6 +79,7 @@ def backup():
 
 
 @bp.route("/init/<name>")
+@cross_origin()
 def init(name):
     # 将之前备份为csv的文件进行还原
     # 由于必定有一个原始的csv ,故不做是否存在的检验

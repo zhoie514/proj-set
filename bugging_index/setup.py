@@ -10,6 +10,8 @@ setup(
         "flask",
         "flask-cors",
         "jieba",
+        "gunicorn",
+        "gevent",
     ],
     python_requires=">=3.6",
 
