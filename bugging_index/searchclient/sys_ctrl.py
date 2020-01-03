@@ -1,8 +1,10 @@
 import csv
 import os
 
-from flask import (Blueprint, render_template, redirect, url_for, current_app)
-from instance.config import (REBUILD, BACKUP, BACKUP_DIR, INIT)
+from flask import (Blueprint, render_template, redirect, url_for, current_app,
+                   request)
+from werkzeug.utils import secure_filename
+from instance.config import (REBUILD, BACKUP, BACKUP_DIR, INIT, IMPORT_CSV)
 from searchclient.db import get_db
 from flask_cors import cross_origin
 
@@ -37,11 +39,15 @@ def rebuild_index(name):
         con_id = initdb.cut(contents)
         if name == "errorlist":
             db.execute("delete from err_index")
-            db.executemany("insert into err_index (r_content,r_id) values (?, ?);", con_id)
+            db.executemany(
+                "insert into err_index (r_content,r_id) values (?, ?);",
+                con_id)
             db.commit()
         elif name == "qanda":
             db.execute("delete from qanda_index")
-            db.executemany("insert into qanda_index (r_content,r_id) values (?, ?);", con_id)
+            db.executemany(
+                "insert into qanda_index (r_content,r_id) values (?, ?);",
+                con_id)
             db.commit()
     if not REBUILD:
         return {"code": 403, "msg": "not allowed"}
@@ -71,7 +77,9 @@ def backup():
         db = get_db()
         select_sql = "select * from {}".format(name)
         contents = db.execute(select_sql).fetchall()
-        with open(os.path.join(BACKUP_DIR, "{}.csv".format(name)), "w+", newline="") as f:
+        with open(os.path.join(BACKUP_DIR, "{}.csv".format(name)),
+                  "w+",
+                  newline="") as f:
             writer = csv.writer(f)
             writer.writerows(contents)
             f.flush()
@@ -98,3 +106,71 @@ def init(name):
         initdb.init_index_qa()
         return {"code": 200, "msg": u"数据库还原成功..."}
     return {"code": 404, "msg": "not found"}
+
+
+@bp.route("/add-err", methods=("post", ))
+@cross_origin()
+def add_err():
+    if not IMPORT_CSV:
+        return {"code": 204, "msg": "暂时关闭此功能,请联系管理员"}
+    try:
+        f = request.files['errorlist']
+    except Exception as e:
+        return {"code": 201, "msg": "文件错误"}
+    # 验证文件类型是否是 csv
+    if f.filename[-3:] != "csv":
+        #  如果不正确就不保存这个文件了
+        return {"code": 205, "msg": "文件类型不正确"}
+
+    save_path = current_app.instance_path[:-8] + "searchclient/static/upload_csv/errorlist.csv"
+    f.save(save_path)
+    with open(save_path, 'r', encoding="utf-8") as f:
+        # 验证csv文件的每条记录的数量是否正确
+        contents = csv.reader(f)
+        for content in contents:
+            column = 0
+            for item in content:
+                column += 1
+            if column != 9:
+                return {"code": 206, "msg": "每条记录的元素不正确."}
+    # 通过验证后,将数据写入数据库
+    add_path = save_path[:-14]
+    # 写入数据库
+    initdb.init_err(add_path)
+    # 创建索引
+    initdb.init_index_err()
+    return {"code": 200, "msg": "添加记录完成..."}
+
+
+@bp.route("/add-qa", methods=("post", ))
+@cross_origin()
+def add_qa():
+    if not IMPORT_CSV:
+        return {"code": 204, "msg": "暂时关闭此功能,请联系管理员"}
+    try:
+        f = request.files['qanda']
+    except Exception as e:
+        return {"code": 201, "msg": "文件错误"}
+    # 验证文件类型是否是 csv
+    if f.filename[-3:] != "csv":
+        #  如果不正确就不保存这个文件了
+        return {"code": 205, "msg": "文件类型不正确"}
+
+    save_path = current_app.instance_path[:-8] + "searchclient/static/upload_csv/qanda.csv"
+    f.save(save_path)
+    with open(save_path, 'r', encoding="utf-8") as f:
+        # 验证csv文件的每条记录的数量是否正确
+        contents = csv.reader(f)
+        for content in contents:
+            column = 0
+            for item in content:
+                column += 1
+            if column != 4:
+                return {"code": 206, "msg": "每条记录的元素不正确."}
+    # 通过验证后,将数据写入数据库
+    add_path = save_path[:-9]
+    # 写入数据库
+    initdb.init_qa(add_path)
+    # 创建索引
+    initdb.init_index_qa()
+    return {"code": 200, "msg": "添加记录完成..."}

@@ -8,14 +8,14 @@ ADD_WORDS = "/home/zhoie/proj-set/bugging_index/searchclient/static/jiebawords/a
 REBUILD = True
 
 # 是否允许备份
-BACKUP = True
+BACKUP = False
 BACKUP_DIR = "/home/zhoie/proj-set/bugging_index/searchclient/static/csv"
 
 # 是否允许从CSV导入
-# IMPORT_CSV = True
+IMPORT_CSV = True
 
 # 允许还原db
 INIT = True
 
 # 允许删除记录
-DEL_RECORD = True
+DEL_RECORD = False

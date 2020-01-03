@@ -63,7 +63,6 @@ def init_index_err():
     for content in contents:
         l = []
         new_l = []
-        # content.pop(1)
         for item in content[1:]:
             # 如果item是空字段,jieba.cut会报错
             if item:
