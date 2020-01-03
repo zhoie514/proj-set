@@ -1,0 +1,36 @@
+form {
+    width: 400px;
+    border-radius: 10px;
+    margin: auto;
+    padding: 20px 15px;
+    text-align: center;
+    background-color: antiquewhite;
+}
+
+form.login li {
+    width: auto;
+    margin-top: 15px;
+    border-radius: 10px;
+    background-color: antiquewhite;
+}
+
+form.login input {
+    width: 200px;
+    height: 25px;
+    text-align: center;
+    margin-left: 5px;
+    border-radius: 5px;
+}
+
+form.ch {
+    background-color: rgb(0, 0, 0, 0);
+}
+
+form.ch li {
+    text-align: center;
+    margin-top: 8px;
+}
+
+form.ch button {
+    margin-top: 15px;
+}

@@ -33,4 +33,7 @@ def create_app(test_config=None):
     from . import sys_ctrl
     app.register_blueprint(sys_ctrl.bp)
 
+    from . import admin
+    app.register_blueprint(admin.bp)
+
     return app

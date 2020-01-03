@@ -1,10 +1,9 @@
 {% extends "base.html" %}
-
-{% block title %}
-SYS
-{% endblock %}
-
+{% block title %} SYS {% endblock %}
 {% block search %}
+<div style="text-align: right;">
+    <a href="/admin/login" style="margin-right:400px;"><b>配置入口</b></a>
+</div>
 {% endblock %}
 
 {% block show %}
@@ -19,7 +18,7 @@ SYS
         <li> -</li>
         <li><b><a id="init-db" href="javascript:void(0)">还原数据库</a></b></li>
         <li> -</li>
-        <li><b><span >将csv以追加方式加入数据库并构建索引</span></b></li>
+        <li><b><span>将csv以追加方式加入数据库并构建索引</span></b></li>
         <li>
         <li><br></li>
         <FORM action="add-err" method="POST" enctype="multipart/form-data">
@@ -27,7 +26,7 @@ SYS
             <input type="file" name="errorlist" placeholder="选择一个csv文件">
             <button>确认</button>
             <b style="font-size:12px">编码要求:utf-8,CSV结构如下:</b>
-            
+
             <li><img src="/static/img/err_info.png" style="width:800px; height:120px;margin:20px 10px;"></li>
         </FORM>
         </li>
@@ -46,14 +45,14 @@ SYS
 
         <!-- <li> -->
         <!-- <li><br></li>
-        <FORM action="add-qa" method="POST" enctype="application/x-www-form-urlencoded">
-            <b>3:</b><span>OCR错误码及出错原因</span>
-            <input type="file" name="ocrmap" placeholder="选择一个csv文件">
-            <button>确认</button>
-            <b style="font-size:12px">编码要求:utf-8,CSV结构如下:</b>
-            <li><img src="/static/img/ocr_info.png"></li>
-        </FORM>
-        </li> -->
+                <FORM action="add-qa" method="POST" enctype="application/x-www-form-urlencoded">
+                    <b>3:</b><span>OCR错误码及出错原因</span>
+                    <input type="file" name="ocrmap" placeholder="选择一个csv文件">
+                    <button>确认</button>
+                    <b style="font-size:12px">编码要求:utf-8,CSV结构如下:</b>
+                    <li><img src="/static/img/ocr_info.png"></li>
+                </FORM>
+                </li> -->
     </ul>
 
 </div>

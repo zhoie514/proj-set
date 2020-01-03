@@ -1,10 +1,12 @@
 import csv
 import os
+from imp import reload
 
 from flask import (Blueprint, render_template, redirect, url_for, current_app,
                    request)
 from werkzeug.utils import secure_filename
-from instance.config import (REBUILD, BACKUP, BACKUP_DIR, INIT, IMPORT_CSV)
+from instance.config import (BACKUP_DIR)
+import instance.config
 from searchclient.db import get_db
 from flask_cors import cross_origin
 
@@ -28,7 +30,8 @@ def rebuild_index(name):
         name = "qanda"
     else:
         return {"code": 405, "msg": "Error Name"}
-
+    reload(instance.config)
+    REBUILD = instance.config.REBUILD
     if REBUILD:
         db = get_db()
         select_sql = "select * from {}".format(name)
@@ -71,8 +74,9 @@ def backup():
         else:
             return {"code": 405, "msg": "Error Name"}
 
-        if not BACKUP:
-            return {"code": 403, "msg": "not allowed"}
+        reload(instance.config)
+        if not instance.config.BACKUP:
+            return {"code": 403, "msg": "暂时关闭功能,请联系管理员"}
 
         db = get_db()
         select_sql = "select * from {}".format(name)
@@ -92,7 +96,8 @@ def init(name):
     # 将之前备份为csv的文件进行还原
     # 由于必定有一个原始的csv ,故不做是否存在的检验
     # 前端可以做成ajax请求,耗时较久
-    if not INIT:
+    reload(instance.config)
+    if not instance.config.INIT:
         return {"code": 405, "msg": "not allowed"}
     if name == "db":
         db = get_db()
@@ -111,7 +116,8 @@ def init(name):
 @bp.route("/add-err", methods=("post", ))
 @cross_origin()
 def add_err():
-    if not IMPORT_CSV:
+    reload(instance.config)
+    if not instance.config.IMPORT_CSV:
         return {"code": 204, "msg": "暂时关闭此功能,请联系管理员"}
     try:
         f = request.files['errorlist']
@@ -145,7 +151,8 @@ def add_err():
 @bp.route("/add-qa", methods=("post", ))
 @cross_origin()
 def add_qa():
-    if not IMPORT_CSV:
+    reload(instance.config)
+    if not instance.config.IMPORT_CSV:
         return {"code": 204, "msg": "暂时关闭此功能,请联系管理员"}
     try:
         f = request.files['qanda']

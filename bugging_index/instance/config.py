@@ -5,17 +5,17 @@ DEL_WORDS = "/home/zhoie/proj-set/bugging_index/searchclient/static/jiebawords/d
 ADD_WORDS = "/home/zhoie/proj-set/bugging_index/searchclient/static/jiebawords/add_word.txt"
 
 # 是否开启重建索引
-REBUILD = True
+REBUILD =True
 
 # 是否允许备份
-BACKUP = False
+BACKUP =False
 BACKUP_DIR = "/home/zhoie/proj-set/bugging_index/searchclient/static/csv"
 
 # 是否允许从CSV导入
-IMPORT_CSV = True
+IMPORT_CSV =False
 
 # 允许还原db
-INIT = True
+INIT =False
 
 # 允许删除记录
-DEL_RECORD = False
+DEL_RECORD =False

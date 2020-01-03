@@ -1,0 +1,70 @@
+{% extends "base.html" %} {% block title %} Admin {% endblock %} {% block script %}
+<link rel="stylesheet" href="{{ url_for('static',filename='admin/admin.css') }}"> {% endblock %} {% block index %}
+<div class="title-index">
+    {% if res.user %}
+    <table class="tb-index">
+        <tr>
+            <th class="rightside">{{ res.user }}&nbsp&nbsp&nbsp&nbsp<a href="/admin/logout">注销</a>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href="/sys">返回</a>  </th>
+        </tr>
+    </table>
+    {% else %}
+    <form class="login" method="POST" action="/admin/login" enctype="application/x-www-form-urlencoded">
+        <ul>
+            <li>
+                <strong>用户名:</strong><input class="uname" type="text" name="uname" value="admin">
+            </li>
+            <li>
+                <strong>密&nbsp&nbsp&nbsp码:</strong><input class="upwd" type="password" name="upwd" value="****">
+            </li>
+            <li>
+                <button>登录</button>
+            </li>
+            <li>{{ res.error }}</li>
+        </ul>
+        <div style="text-align: right;"><a href="/sys" style="margin-right:100px">返回</a> </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %} {% block search %}
+<div></div>{% endblock %} {% block show %} {% if res.user %}
+<div>
+    <form class="ch" enctype="application/x-www-form-urlencoded" method="POST" action="/admin/config">
+        <ul>
+            <li>
+                <span>是否允许重建索引/REBUILD&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp: </span> <input checked type="radio"
+                    name="REBUILD" id="REBUILD1" value="True"><label for="REBUILD1">是</label><input id="REBUILD0"
+                    type="radio" name="REBUILD" value="False">
+                <label for="REBUILD0">否</label>
+            </li>
+            <li>
+                <span>是否允许备份/BACKUP&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp:
+                </span> <input checked type="radio" name="BACKUP" id="BACKUP1" value="True"><label
+                    for="BACKUP1">是</label><input id="BACKUP0" type="radio" name="BACKUP" value="False"><label
+                    for="BACKUP0">否</label>
+            </li>
+            <li>
+                <span>是否允许从csv导入/IMPORT_CSV&nbsp: </span> <input checked type="radio" name="IMPORT_CSV" id="IMPORT_CSV1"
+                    value="True"><label for="IMPORT_CSV1">是</label><input id="IMPORT_CSV0" type="radio"
+                    name="IMPORT_CSV" value="False"><label for="IMPORT_CSV0">否</label>
+            </li>
+            <li>
+                <span>是否允许初始化数据库/INIT&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp: </span> <input type="radio"
+                    name="INIT" id="INIT1" value="True"><label for="INIT1">是</label><input checked id="INIT0"
+                    type="radio" name="INIT" value="False">
+                <label for="INIT0">否</label>
+            </li>
+            <li>
+                <span>是否允许删除启示/DEL_RECORD&nbsp&nbsp: </span> <input checked type="radio" name="DEL_RECORD"
+                    id="DEL_RECORD1" value="True"><label for="DEL_RECORD1">是</label><input id="DEL_RECORD0" type="radio"
+                    name="DEL_RECORD" value="False"><label for="DEL_RECORD0">否</label>
+            </li>
+            <li>
+                <button>保存</button>
+            </li>
+        </ul>
+    </form>
+</div>
+{% else %}
+<div></div>
+
+{% endif%} {% endblock %}
