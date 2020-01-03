@@ -31,7 +31,7 @@ $(function() {
         $.ajax({
             method: "delete",
             contentType: "application/json",
-            url: "http://192.168.10.60:8080" + url + "/" + id,
+            url: "http://10.168.0.57:65443" + url + "/" + id,
             success: function(result) {
                 if (result.code == 200) {
                     alert("Done");
@@ -48,7 +48,7 @@ $(function() {
         $.ajax({
             method: "get",
             contentType: "application/json",
-            url: "http://192.168.10.60:8080/sys/backup",
+            url: "http://10.168.0.57:65443/sys/backup",
             beforeSend: function() {
                 $("a#backup-db").html("处理中...")
                     // $("a#backup-db").attr("style", "display:none")
@@ -72,7 +72,7 @@ $(function() {
         $.ajax({
             method: "get",
             contentType: "application/json",
-            url: "http://192.168.10.60:8080/sys/init/db",
+            url: "http://10.168.0.57:65443/sys/init/db",
             beforeSend: function() {
                 $("a#init-db").html("处理中...")
             },
@@ -94,7 +94,7 @@ $(function() {
         $.ajax({
             method: "get",
             contentType: "application/json",
-            url: "http://192.168.10.60:8080/sys/reverse-index/err",
+            url: "http://10.168.0.57:65443/sys/reverse-index/err",
             beforeSend: function() {
                 $("a#rebuild-err-index").html("处理中...")
             },
@@ -117,7 +117,7 @@ $(function() {
         $.ajax({
             method: "get",
             contentType: "application/json",
-            url: "http://192.168.10.60:8080/sys/reverse-index/qa",
+            url: "http://10.168.0.57:65443/sys/reverse-index/qa",
             beforeSend: function() {
                 $("a#rebuild-qa-index").html("处理中...")
 
