@@ -2,13 +2,13 @@ import csv
 import os
 from imp import reload
 
+import instance.config
 from flask import (Blueprint, render_template, redirect, url_for, current_app,
                    request)
-from werkzeug.utils import secure_filename
-from instance.config import (BACKUP_DIR)
-import instance.config
-from searchclient.db import get_db
 from flask_cors import cross_origin
+from instance.config import (BACKUP_DIR)
+from searchclient.db import get_db
+from werkzeug.utils import secure_filename
 
 from . import init_server_db as initdb
 
@@ -83,7 +83,7 @@ def backup():
         contents = db.execute(select_sql).fetchall()
         with open(os.path.join(BACKUP_DIR, "{}.csv".format(name)),
                   "w+",
-                  newline="") as f:
+                  newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerows(contents)
             f.flush()
@@ -113,7 +113,7 @@ def init(name):
     return {"code": 404, "msg": "not found"}
 
 
-@bp.route("/add-err", methods=("post", ))
+@bp.route("/add-err", methods=("post",))
 @cross_origin()
 def add_err():
     reload(instance.config)
@@ -129,6 +129,9 @@ def add_err():
         return {"code": 205, "msg": "文件类型不正确"}
 
     save_path = current_app.instance_path[:-8] + "searchclient/static/upload_csv/errorlist.csv"
+    dest_dir = current_app.instance_path[:-8] + "searchclient/static/upload_csv/"
+    if not os.path.isdir(dest_dir):
+        os.makedirs(dest_dir)
     f.save(save_path)
     with open(save_path, 'r', encoding="utf-8") as f:
         # 验证csv文件的每条记录的数量是否正确
@@ -148,7 +151,7 @@ def add_err():
     return {"code": 200, "msg": "添加记录完成..."}
 
 
-@bp.route("/add-qa", methods=("post", ))
+@bp.route("/add-qa", methods=("post",))
 @cross_origin()
 def add_qa():
     reload(instance.config)
@@ -162,8 +165,10 @@ def add_qa():
     if f.filename[-3:] != "csv":
         #  如果不正确就不保存这个文件了
         return {"code": 205, "msg": "文件类型不正确"}
-
     save_path = current_app.instance_path[:-8] + "searchclient/static/upload_csv/qanda.csv"
+    dest_dir = current_app.instance_path[:-8] + "searchclient/static/upload_csv/"
+    if not os.path.isdir(dest_dir):
+        os.makedirs(dest_dir)
     f.save(save_path)
     with open(save_path, 'r', encoding="utf-8") as f:
         # 验证csv文件的每条记录的数量是否正确
