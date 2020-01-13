@@ -1,0 +1,53 @@
+
+# Describe
+
+# 这是一个centos7 Python3.6 镜像
+
+# 基础镜像
+FROM centos:centos7
+
+# 镜像的维护者的姓名和邮箱 
+# MAINTAINER zhou<zhou@123.com>
+
+# 对外提供的接口
+# EXPOSE 80
+
+# 设置环境变量 可以用$变量 获取 如 $my_EN
+# ENV my_ENV /home/zhou
+
+# 换yum源
+RUN curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+
+# 激活
+RUN yum makecache
+
+# Python
+RUN yum  install -y python3
+
+# 换pip源
+RUN mkdir ~/.pip && echo "[global]" > ~/.pip/pip.conf && echo " index-url = https://pypi.tuna.tsinghua.edu.cn/simple" >> ~/.pip/pip.conf
+
+
+# pip3 安装包 用 \ 换行
+RUN pip3 install flask && \
+	pip3 install flask-cors &&  \
+
+# 挂载数据卷-比如把项目挂载 不会把 文件整合到镜像中
+# VOLUME /home/zhou/myserver /myserver
+
+# 复制文件,会把内容整合到docker镜像中
+# COPY ./require.txt /
+
+# 会自动解压tar包,功能同COPY
+# ADD
+
+# 指定终端进入时的默认目录
+# WORKDIR /myserver
+
+# 运行命令,docker run 最后的参数会覆盖这个命令
+# CMD ["gunicorn","-w","2","-b","0.0.0.0:8001","flaskapp:app"]
+CMD /bin/bash
+
+# 运行命令,无论如何都会运行,不会被覆盖;用法同 CMD
+# ENTRYPOINT   
+
