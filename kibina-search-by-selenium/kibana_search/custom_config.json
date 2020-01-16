@@ -1,0 +1,6 @@
+{
+"test":"testing",
+// 其他需要顺序点击的控件 或 标签
+"common_button":["xpath1","xpath2"]
+// 123
+}

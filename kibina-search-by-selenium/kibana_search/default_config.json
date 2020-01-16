@@ -1,0 +1,43 @@
+// 除了可以用 // 注释(独占一行,后面必须加一个或多个空格)外, 其余规则遵守json: 双引号,不能有多余的空行,不能有多余的逗号
+{
+//    一个拥有良好信息排布的kibaba页面 url
+"url":"http://log.xwfintech.com:20008/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:
+(from:now%2FM,mode:quick,to:now%2FM))&_a=(columns:!(cmd_id,doc.desc,beat.hostname,doc.req_serial_no,doc.action_num),
+index:'524e0370-c17c-11e8-85be-954a266357fc',interval:auto,query:(language:lucene,query:'(SRCBLE20200111000000000000613
+9%20OR%20SRCBLE202001070000000000003936%20)%20AND%2050005'),sort:!('@timestamp',desc))",
+//
+// csv 文件的输出位置 抓取的信息
+"output_csv":"csv/output.csv",
+//
+// csv 文件的输入位置 比如 一系列的流水号
+"input_csv":"csv/input.csv",
+//
+// 要抓取的字段 要确保在页面中能看到
+"scratch_field":["time","cmd_id","doc.desc","beat.hostname","doc.req_serial_no","doc.action_num"],
+//
+// 需要用正则抓取的内容 非结构化的文本
+"reg_scratch":["regex",""],
+//
+// 除了搜索 csv中的流水号之外,还需要 在该流水号后面加的内容组合成一个合规的es search语句
+"extend_search":"  AND 50005",
+//
+// 搜索框 xpath
+"search_input":"//*[@id='kibana-body']/div[1]/div/div/div[4]/discover-app/kbn-top-nav/div/div[3]/div/query-bar/form/kbn-typeahead/div/ng-transclude/div/div/input",
+//
+// 搜索按钮 xpath
+"search_button":"//*[@id='kibana-body']/div[1]/div/div/div[4]/discover-app/kbn-top-nav/div/div[3]/div/query-bar/form/kbn-typeahead/div/ng-transclude/div/button",
+//
+// 设置其他可点击的部件 可以在custom_config中新建
+// "common_button":["xpath1","xpath2"]
+//
+//
+// 表格内容中的 t_head 标签的xpath
+"t_head":"//table[@class='kbn-table table']/thead/tr",
+//
+// 表格内容中的 tbody 标签的xpath
+"t_body":"//table[@class='kbn-table table']/tbody/tr[@class='discover-table-row']",
+"other":"other"
+}
+
+
+
