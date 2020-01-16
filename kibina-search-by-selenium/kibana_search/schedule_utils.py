@@ -25,7 +25,7 @@ class Browser():
         :param headless:
         :param default_config:default_config为一个json路径
         """
-        self.g = {"res": []}  # 存储一些 临时加入的对象的
+        self.g = {"res": [[]]}  # 存储一些 临时加入的对象的
         self.default_config = self.config = json2dict(default_config)
         self.options = webdriver.ChromeOptions()
         if self.default_config.get("error", None):
@@ -42,6 +42,41 @@ class Browser():
                 self.default_config.update(custom_config_dic)
         for k, v in self.default_config.items():
             setattr(self, k, v)
+
+        if len(self.action_scratch) == 2:
+            self.g['condition'] = self.action_scratch["condition"]
+            self.g['result'] = self.action_scratch["result"]
+            # self.g['extra_data'] = []  # 满足条件的额外数据
+
+    def dec_get_tbody_infos(self) -> List[List[str]]:
+        """"""
+        res = self.g.get('res')
+        try:
+            tr_list = self.browser.find_element_by_xpath(self.t_body)
+            tr = tr_list
+            tmp = [item.strip() for item in tr.text.split("\n")]
+            clean_tmp = [t for t in tmp for i in self.g.get("index", []) if tmp.index(t) == i]
+            action_field = tr.find_elements_by_xpath("./td").pop(self.g['head'].index('doc.actions') + 1).text
+            # print(action_field)
+
+            if len(self.action_scratch) == 2 or len(self.g.get('condition', {})) != 0 or len(
+                    self.g.get('result', [])) != 0:
+                actions_field_word = action_field
+                actions_list = parse_actions_field(actions_field_word)
+                if len(actions_list) == 0:
+                    # 如果页面中没有这个字段就不去匹配了
+                    res.append(clean_tmp)
+                    return res
+                condition_set = set(self.g.get('condition').items())
+                for action in actions_list:
+                    action_set = set(action.items())
+                    if condition_set.issubset(action_set):
+                        for e in self.g.get('result'):
+                            clean_tmp.append(action.get(e, "no-data"))
+            res.append(clean_tmp)
+        except Exception as e:
+            print(f'其他错误:{e},对应搜索内容:{self.g.get("search_content")}')
+            return res
 
     # 打开页面
     def get_page(self) -> None:
@@ -98,20 +133,27 @@ class Browser():
     # 获得页面中的表格中的数据 与 scratch_field 中的集合取交集
     def get_thead_infos(self) -> List[List[str]]:
         res = self.g.get('res')
-        try:
-            # 1. 首先获取表头
-            head = self.browser.find_element_by_xpath(self.t_head)
-            tmp = [item.strip() for item in head.text.split()]
-            # 2. 对网页中显示的内容与我们想要的内容进行对比,其实当然可以统一,但要考虑到 我想看n条信息,但我只想保留 k(k<=n)条信息的情况
-            # 2.1 index is [int,int2,...] 这个index 后面也会用到
-            index = parse_index(tmp, self.scratch_field)
-            self.g['index'] = index
-            # 仅取出config中 要求的字段,如不存在会报错
-            clean_tmp = [t for t in tmp for i in index if tmp.index(t) == i]
-            res.append(clean_tmp)
-        except Exception:
-            print(f'页面中没有表格,可能搜索的结果为空:{self.g.get("search_content")}')
-        return res
+        if len(res[0]) != 0:
+            pass
+        else:
+            time.sleep(2)
+            try:
+                # 1. 首先获取表头
+                head = self.browser.find_element_by_xpath(self.t_head)
+                tmp = [item.strip() for item in head.text.split()]
+                # 2. 对网页中显示的内容与我们想要的内容进行对比,其实当然可以统一,但要考虑到 我想看n条信息,但我只想保留 k(k<=n)条信息的情况
+                # 2.1 index is [int,int2,...] 这个index 后面也会用到
+                self.g['head'] = tmp
+                index = parse_index(tmp, self.scratch_field)
+                self.g['index'] = index
+                # 仅取出config中 要求的字段,如不存在会报错
+                clean_tmp = [t for t in tmp for i in index if tmp.index(t) == i]
+                clean_tmp = clean_tmp + self.g.get('result', [])
+                res.insert(0, clean_tmp)
+                res.pop()
+            except Exception:
+                print(f'页面中没有表格,可能搜索的结果为空:{self.g.get("search_content")}')
+            return res
 
     def get_tbody_infos(self) -> List[List[str]]:
         """"""
@@ -119,15 +161,17 @@ class Browser():
         try:
             # 3. 取出tbody中的记录
             # 3.1 找出tbody中的tr节点
-            tr_list = self.browser.find_elements_by_xpath(self.t_body)
-            if len(tr_list) == 0:
-                print(f'页面中没有表格,可能搜索的结果为空:{self.g.get("search_content")}')
-                return res
+            tr_list = self.browser.find_element_by_xpath(self.t_body)
+            # if len(tr_list) == 0:
+            #     print(f'页面中没有表格,可能搜索的结果为空:{self.g.get("search_content")}')
+            #     return res
             # 3.2 再从 tr节点的遍历 所有的td节点并获取内容
-            for tr in tr_list:
-                tmp = [item.strip() for item in tr.text.split("\n")]
-                clean_tmp = [t for t in tmp for i in self.g.get("index", []) if tmp.index(t) == i]
-                res.append(clean_tmp)
+            #  这里不用遍历了,直接取最新一条就行了
+            tr = tr_list
+            # for tr in tr_list:
+            tmp = [item.strip() for item in tr.text.split("\n")]
+            clean_tmp = [t for t in tmp for i in self.g.get("index", []) if tmp.index(t) == i]
+            res.append(clean_tmp)
         except Exception:
             print(f'其他错误,对应搜索内容:{self.g.get("search_content")}')
         return res
@@ -153,14 +197,11 @@ class Browser():
         try:
             self.get_page()
             key_serial_nos = input2list(self.input_csv)
-            count = 0
             for serial_no in key_serial_nos:
                 self.send_content(content=serial_no, delay=delay, limit=limit)
-                if not self.have_head():
-                    self.get_thead_infos()
-                count += 1
+                self.get_thead_infos()
                 self.click_searck_key(wait=wait)
-                self.get_tbody_infos()
+                self.dec_get_tbody_infos()
             return True
         except Exception:
             return False
@@ -174,10 +215,3 @@ class Browser():
     def quit(self):
         self.browser.quit()
 
-    # 判断是否有内容
-    def have_head(self) -> bool:
-        """
-        返回是否拿到表头了
-        :return: True :有   False:没有
-        """
-        return len(self.g.get('res')) != 0

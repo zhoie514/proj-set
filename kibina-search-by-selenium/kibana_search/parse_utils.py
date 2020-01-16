@@ -1,10 +1,10 @@
 """解析工具, 文本处理相关"""
 import json
 import re
-from typing import List
+from typing import List, Union
 
 
-def json2dict(filepath: str) -> dict:
+def json2dict(filepath: str) -> Union[dict, str]:
     """
     加载json文件,可以使json中拥有以 # 开头的注释
     :param filepath: json file 的路径
@@ -23,16 +23,23 @@ def json2dict(filepath: str) -> dict:
         except IndexError as e:
             pass
         except Exception as e:
-            return {"error": e}
+            return f"解析错误{e}"
         try:
             obj = json.loads(content)
         except json.decoder.JSONDecodeError as e:
-            return {"error": e}
+            return f"解析错误{e}"
     return obj
 
 
-def parse_actions_field(string: str) -> dict:
-    ...
+def parse_actions_field(string: str) -> List[dict]:
+    """
+    解析从网页中获取的字符串  主要针对 doc.actions 这个字段的
+    :param string:input {"":"","":"",...},{"":"","":"",...}...
+    :return:[{"":"","":"",...},{"":"","":"",...},...]
+    """
+    string = '['+string+']'
+    return json.loads(string)
+
 
 
 def parse_index(web_content: List, config_content: List) -> List[int]:
@@ -73,6 +80,8 @@ def input2list(filepath: str) -> list:
 
 
 if __name__ == '__main__':
+    #  可以 检测 json 文件 是否能正确解析
+    #  出错的话,得去找找原因
     cust = json2dict("custom_config.json")
     print(cust)
     defa = json2dict('default_config.json')
