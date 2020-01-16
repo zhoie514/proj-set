@@ -1,5 +1,6 @@
 """解析工具, 文本处理相关"""
 import json
+import re
 from typing import List
 
 
@@ -50,15 +51,25 @@ def parse_index(web_content: List, config_content: List) -> List[int]:
             x = web_content.index(e.lower())
             res.append(x)
         except ValueError:
-            raise ValueError(f'{e} 不在网页中,请把网页调整一下,重新复制url')
-
-    # 一个比较秀的写法 但我想有详细的 Error 丢出来,且后者要求全匹配, 故pass
+            raise ValueError(f'{e} 字段不在网页中,请把网页调整一下,重新复制url')
+    if len(res) == 0:
+        raise ValueError('所有字段均不在网页中,请把网页调整一下,重新复制url')
+    # 一个比较秀的写法 但想有详细的 Error 丢出来,且后者要求全匹配, 故pass
     # res = [web_content.index(item) for item in web_content for item2 in config_content if item.lower() == item2.lower()]
     return res
 
 
-class DefError(Exception):
-    pass
+def input2list(filepath: str) -> list:
+    res = []
+    with open(filepath, mode="r", encoding="utf-8") as f:
+        for line in f.readlines():
+            obj = re.search(r'(\w+)', line)
+            res.append(obj.group(1))
+    return res
+
+
+# class DefError(Exception):
+#     pass
 
 
 if __name__ == '__main__':
