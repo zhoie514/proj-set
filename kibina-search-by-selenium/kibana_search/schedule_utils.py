@@ -52,8 +52,10 @@ class Browser():
         """"""
         res = self.g.get('res')
         try:
+            # body 中的tr节点列表 一般只找最近的一条,这个api默认只找第一个故未做处理
             tr_list = self.browser.find_element_by_xpath(self.t_body)
             tr = tr_list
+            # tmp为 tr节点的所有文字内容
             tmp = [item.strip() for item in tr.text.split("\n")]
             clean_tmp = [t for t in tmp for i in self.g.get("index", []) if tmp.index(t) == i]
             action_field = tr.find_elements_by_xpath("./td").pop(self.g['head'].index('doc.actions') + 1).text

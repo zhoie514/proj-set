@@ -1,26 +1,27 @@
 // 除了可以用 // 注释(独占一行,后面必须加一个或多个空格)外, 其余规则遵守json: 双引号,不能有多余的空行,不能有多余的逗号
+// 这个文件中的所有项是必传的,可以为 "" 或 {}  ,但必须要有该字段. 否则容易触发KeyError
 {
-//    一个拥有良好信息排布的kibaba页面 url
-"url":"http://log.xwfintech.com:20008/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now%2FM,mode:quick,to:now%2FM))&_a=(columns:!(cmd_id,doc.desc,beat.hostname,doc.req_serial_no,doc.action_num,doc.code,beat.name,doc.cur_step,doc.actions),index:'524e0370-c17c-11e8-85be-954a266357fc',interval:auto,query:(language:lucene,query:'SRCBLE202001150000000000006511%20AND%2050005'),sort:!('@timestamp',desc))",
+//    一个拥有良好信息排布的kibaba页面 url   doc.actions这个字段要放在最后一列
+"url":"http://log.xwfintech.com:20008/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now%2FM,mode:quick,to:now%2FM))&_a=(columns:!(cmd_id,doc.desc,beat.hostname,doc.req_serial_no,doc.action_num,doc.code,doc.cur_step,doc.trx,doc.phone,doc.actions),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'524e0370-c17c-11e8-85be-954a266357fc',key:doc.cur_step,negate:!f,params:(query:6,type:phrase),type:phrase,value:'6'),query:(match:(doc.cur_step:(query:6,type:phrase))))),index:'524e0370-c17c-11e8-85be-954a266357fc',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))",
 //
-// csv 文件的输出位置 抓取的信息
-"output_csv":"csv/output.csv",
+// csv 文件的输出位置 抓取的信息  由于想加时间戳保留每一个output instance,故此配置不生效
+// "output_csv":"csv/output.csv",
 //
 // csv 文件的输入位置 比如 一系列的流水号
 "input_csv":"csv/input.csv",
 //
-// 要抓取的字段 要确保在页面中能看到
-"scratch_field":["time","cmd_id","doc.desc","beat.hostname","doc.req_serial_no","doc.action_num"],
+// 要抓取的字段 要确保在页面中能看到 忽略大小写
+"scratch_field":["doc.req_serial_no","cmd_id","doc.desc","beat.hostname","doc.action_num","doc.phone","doc.cur_step"],
 //
 // 针对 doc_actions 里面的东西,condition为判断条件集合 result 为想要的结果字段
 // condition 示例: "condition":{"stat1":1,"interface":"/api/vi/user/detail"}
 // result 示例: "result":["row","desc"]
 // 解释: 在doc_actions里面找满足 condition 里面条件的 result里面字段的值
 // 可以为空"reg_scratch":{},不为空则必须要有condition 与 result
-"action_scratch":{"condition":{"state":1,"interface":"events"},"result":["row"]},
+ "action_scratch":{"condition":{"state":1},"result":["row","state","interface","service_name"]},
 // "action_scratch":{},
 //
-// 除了搜索 csv中的流水号之外,还需要 在该流水号后面加的内容组合成一个合规的es search语句
+// 除了搜索 csv中的流水号之外,还需要 在该流水号后面加的内容组合成一个合规的es search语句,当然也可以不加 写 "",
 "extend_search":"  AND 50005",
 //
 // 搜索框 xpath
@@ -35,8 +36,8 @@
 // 表格内容中的 tbody 标签的xpath
 "t_body":"//table[@class='kbn-table table']/tbody/tr[@class='discover-table-row']",
 //
-// 设置其他可点击的部件 可以在custom_config中新建,也可以在这修改,whatever
-"other":"other"
+// 设置其他可点击的部件 可以在custom_config中新建,也可以在这修改,whatever,但有没有作用就不一定了 ;-)
+"otherkey":"other"
 }
 
 

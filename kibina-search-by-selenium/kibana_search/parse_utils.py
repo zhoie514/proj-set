@@ -63,7 +63,7 @@ def parse_index(web_content: List, config_content: List) -> List[int]:
         raise ValueError('所有字段均不在网页中,请把网页调整一下,重新复制url')
     # 一个比较秀的写法 但想有详细的 Error 丢出来,且后者要求全匹配, 故pass
     # res = [web_content.index(item) for item in web_content for item2 in config_content if item.lower() == item2.lower()]
-    return res
+    return list(set(res))
 
 
 def input2list(filepath: str) -> list:

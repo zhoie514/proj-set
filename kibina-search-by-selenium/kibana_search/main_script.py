@@ -2,7 +2,7 @@ from schedule_utils import *
 
 
 # 运行方式1
-if __name__ == '__main__':
+def way1for_50005():
     # 时间戳记录
     t = time.time()
     # 打开一个浏览器,如果自定义了配置json文件就使用,没有的话就使用默认的,自定义的可以覆盖默认的
@@ -10,11 +10,10 @@ if __name__ == '__main__':
     browser = Browser('custom_config.json', headless=False)
     browser.auto_run(wait=1, delay=2, limit=20)
     print(time.time() - t)
-    exit()
+
 
 # 运行方式2
-if __name__ == '__main__1':
-    # 时间戳记录
+def way2for_50005():
     t = time.time()
     browser = Browser('custom_config.json', headless=False)
     try:
@@ -31,3 +30,10 @@ if __name__ == '__main__1':
     browser.quit()
     print("Done...")
     print(time.time() - t)
+
+
+if __name__ == '__main__':
+    # 放款失败错误查询
+    way1for_50005()
+
+    ...
