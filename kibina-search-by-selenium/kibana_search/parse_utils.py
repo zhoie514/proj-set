@@ -6,7 +6,7 @@ from typing import List, Union
 
 def json2dict(filepath: str) -> Union[dict, str]:
     """
-    加载json文件,可以使json中拥有以 # 开头的注释
+    加载json文件,可以使json中拥有以 // 开头的注释
     :param filepath: json file 的路径
     :return: 一个字典 文件解析错误返回{"error":"error_info"}
     """

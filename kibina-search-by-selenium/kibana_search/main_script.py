@@ -8,7 +8,7 @@ def way1for_50005():
     # 打开一个浏览器,如果自定义了配置json文件就使用,没有的话就使用默认的,自定义的可以覆盖默认的
     # 可以开启无头模式
     browser = Browser('custom_config.json', headless=False)
-    browser.auto_run(wait=1, delay=2, limit=20)
+    browser.auto_run(wait=1, delay=3, limit=20)
     print(time.time() - t)
 
 
