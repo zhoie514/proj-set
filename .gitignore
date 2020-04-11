@@ -6,9 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
-csv/
-CONF.py
-log*.txt
+*/csv/
+*/CONF.py
+*/log*.txt
 
 
 # Distribution / packaging
