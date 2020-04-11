@@ -9,6 +9,7 @@ __pycache__/
 */csv/
 */CONF.py
 */log*.txt
+*/.idea/
 
 
 # Distribution / packaging
