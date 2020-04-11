@@ -24,11 +24,9 @@ pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
-dist/
 *.egg
 MANIFEST
-*/.idea/
-.idea/
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -129,7 +127,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-kibina-search-by-selenium/kibana_search/csv/
-
-
