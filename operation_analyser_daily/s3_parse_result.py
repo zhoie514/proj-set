@@ -119,6 +119,10 @@ def parse_row_obj(obj: dict) -> ():
         return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1
     # 放款
     if obj["_source"]["rule_num"] in ("50006", "50015"):
+        # 筛数据临时用的代码
+        if CONF.DEBUG == True:
+            if obj["_source"]["extra"]["source_code"] == "QH" and obj["_source"]["rsp_msg"] == "其它错误":
+                print("流水号:", obj["_source"]["extra"]["serial_no"], " , ", "trx:", obj["_source"]["trx"])
         return (log_type, result, rsp_msg, err, rule_num), 1
     if obj["_source"]["rule_num"] in ("50001", "50003", "50005", "50014"):
         return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1

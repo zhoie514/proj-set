@@ -90,6 +90,166 @@ def csv_handler(my_csv: List) -> dict:
     return res
 
 
+import csv
+
+
+class NewCsvHandler:
+    """一个新的处理CSV的分析器"""
+    # 2020-04-12
+    def __init__(self, csv_path: str):
+        """用一个csv路径初始化一个解析器
+        并从路径中解析出sourceCode
+        解析出 rows [[],[],],一行为一个内部列表"""
+        self.rows = list()
+        try:
+            with open(csv_path, "r", encoding="GBK", newline="") as f:
+                csv_content = csv.reader(f)
+                for t in csv_content:
+                    self.rows.append(t)
+        except Exception as e:
+            with open(csv_path, "r", encoding="UTF-8", newline="") as f:
+                csv_content = csv.reader(f)
+                for t in csv_content:
+                    self.rows.append(t)
+        finally:
+            sourcecode = csv_path.split("-")[0].split("/")[-1]
+        self.sourceCode = sourcecode
+        # 放与excel中差不多对应的结果的
+        self.result = []
+        self.sum_realname = 0  # 征信总笔数
+        self.realname_request_failed = 0  # 请求失败,比如姓名大于20啦,地址大于60或者等于0啦
+        self.user_already_regist = 0  # 已在上农注册用户数
+        self.user_unregist = 0  # 未注册笔数
+        self.ocr_fail = 0  # ocr失败数
+        self.ocr_succ = 0  # ocr成功笔数
+        self.white_box_succ = 0  # 白盒子通过笔数    namelist=0 (太平)
+        self.realname_succ = 0  # 其他的就是返回00 就算
+        self.white_box_rate = 1  # 白盒子核准率
+
+        self.sum_credit = 0  # 授信总数
+        self.credit_request_failed = 0  # 授信请求出错
+        self.credit_succ = 0  # 授信成功
+        self.credit_reject = 0  # 信用拒绝
+        self.credit_net_fail = 0  # 50003网络错误
+        self.credit_antifraud_reject = 0  # 50003 反欺诈拒绝
+        self.credit_rate = 1  # 授信核准率
+
+        self.sum_withdraw = 0  # 提现总数
+        self.withdraw_failed = 0  # 50005请求失败,网络错误或者啥的,好像用不上
+        self.withdraw_succ = 0  # 提现成功笔数
+        self.withdraw_antifraud_reject = 0  # 50005 报反欺诈
+        self.withdraw_ilog_reject = 0  # 提现风控拒绝
+        self.withdraw_pay_failed = 0  # 支付通道拒绝
+        # self.total_amt = 0  # 当日提现总额
+        self.withdraw_rate = 1  # 当日提现成功率
+
+    def gen_result(self):
+        """生成一个列表[,,,],对应相应产品的excel的行里面的数字,
+        其实搞个sqlite会很方便,但算了吧"""
+        # 太平金服有白盒核准率什么的,要单独算
+        for row in self.rows:  # [[],[],...] 取出内部的 []
+            # 征信
+            if row[0] == "realnameauth":
+                self.sum_realname += int(row[-1])
+                if row[1] == "00":
+                    ...
+                if row[1] == "01":
+                    self.realname_request_failed += int(row[-1])
+                if row[1] == "03":
+                    self.user_already_regist += int(row[-1])
+                #     未注册用户数 = 总量-请求失败的-已注册的
+                self.user_unregist = self.sum_realname - self.realname_request_failed - self.user_already_regist
+            elif row[0] == "realnameauth_query":
+                if row[1] == "08":
+                    self.ocr_fail += int(row[-1])
+                if row[1] == "00":
+                    self.realname_succ += int(row[-1])
+                if row[-2] == "0":
+                    #  太平白盒子通过的
+                    self.white_box_succ = int(row[-1])
+                #   ocr 成功的  等于  总量 - 请求失败的 - 已注册的(未注册的) - ocr失败的
+                self.ocr_succ = self.user_unregist - self.ocr_fail
+                #  白盒子通过率 = 白盒子name list 0/ocr成功的
+                if self.ocr_succ != 0 and self.sourceCode.upper() == "TPJF":
+                    self.white_box_rate = self.white_box_succ / self.ocr_succ
+                else:
+                    self.white_box_rate = self.realname_succ / self.ocr_succ
+            # 授信
+            elif row[0] == "credit":
+                self.sum_credit += int(row[-1])
+                if row[2] == "unknow" and len(row[1]) > 2:
+                    self.credit_net_fail += int(row[-1])
+                if row[-2] == "antifraud reject":
+                    self.credit_antifraud_reject += int(row[-1])
+                if row[1] == "01" and row[-2] != "antifraud reject":
+                    self.credit_request_failed += int(row[-1])
+            elif row[0] == "credit_query":
+                if row[1] == "02":
+                    self.credit_reject += int(row[-1])
+                if row[1] == "01":
+                    self.credit_succ += int(row[-1])
+                if self.sum_credit != 0:
+                    self.credit_rate = self.credit_succ / self.sum_credit
+            # 提现
+            elif row[0] == "withdraw":
+                self.sum_withdraw += int(row[-1])
+                if row[1] == "01" and row[-2] == "网络错误":
+                    self.withdraw_failed += int(row[-1])
+                if row[1] == "01" and row[-2] == "antifraud reject":
+                    self.withdraw_antifraud_reject += int(row[-1])
+                if len(str(row[1])) > 2:
+                    self.withdraw_failed += int(row[-1])
+            elif row[0] == "withdraw_query":
+                if row[2] == "处理成功":
+                    self.withdraw_succ += int(row[-1])
+                if row[-2] == "放款失败——ilog拒绝":
+                    self.withdraw_ilog_reject += int(row[-1])
+                if len(row[-2]) > 15:
+                    self.withdraw_pay_failed += int(row[-1])
+                if row[-2] == "原交易失败":
+                    self.withdraw_pay_failed += int(row[-1])
+                if self.sum_withdraw != 0:
+                    self.withdraw_rate = self.withdraw_succ / self.sum_withdraw
+        #  将结果组织到
+        self.result.append(self.sum_realname or 0)
+        self.result.append(self.realname_request_failed or 0)
+        self.result.append(self.user_already_regist or 0)
+        self.result.append(self.user_unregist or 0)
+        self.result.append(self.ocr_fail or 0)
+        self.result.append(self.ocr_succ or 0)
+        self.result.append(self.white_box_rate)
+
+        self.result.append(self.sum_credit or 0)
+        self.result.append(self.credit_request_failed or 0)
+        self.result.append(self.credit_succ or 0)
+        self.result.append(self.credit_reject or 0)
+        self.result.append(self.credit_net_fail or 0)
+        self.result.append(self.credit_antifraud_reject or 0)
+        self.result.append(self.credit_rate)
+
+        self.result.append(self.sum_withdraw or 0)
+        self.result.append(self.withdraw_failed or 0)
+        self.result.append(self.withdraw_succ or 0)
+        self.result.append(self.withdraw_antifraud_reject or 0)
+        self.result.append(self.withdraw_ilog_reject or 0)
+        self.result.append(self.withdraw_pay_failed or 0)
+        self.result.append("总额")
+        self.result.append(self.withdraw_rate)
+        if self.sourceCode.upper() == "TPJF":
+            self.result.insert(6, self.white_box_succ)
+        else:
+            self.result.insert(6, self.realname_succ)
+            ...
+
+    def get_result(self):
+        return self.result
+    def x(self):
+        # for y in self.rows:
+        #     print(y)
+        print(self.sourceCode)
+        print(self.result)
+
+
 def main():
     work_book_path = "excels/Sample.xlsx"
     csv_path = r"csv/source_data/20200409/online_1600000055_20200409_stat.csv"
@@ -118,5 +278,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    ...
+    # main()
+    path1 = "csv/results_output/20200409_qry_res/HB-20200409-qry-res.csv"
+    ins = NewCsvHandler(path1)
+    ins.gen_result()
+    ins.x()

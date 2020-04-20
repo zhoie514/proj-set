@@ -5,10 +5,6 @@ import poplib
 import zipfile
 from datetime import timedelta, datetime
 
-from email.parser import Parser
-from email.header import decode_header
-from email.utils import parseaddr
-
 import CONF
 
 
