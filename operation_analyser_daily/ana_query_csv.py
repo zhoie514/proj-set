@@ -1,17 +1,17 @@
 import csv
 import logging
-import sys
 from collections import defaultdict
+from datetime import datetime, timedelta
 from typing import List
-
+import CONF
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-logging.basicConfig(format='%(asctime)s|%(levelname)s|%(message)s', level=logging.DEBUG, filename='log.txt')
+import Utils
+
+logging.basicConfig(format='%(asctime)s|%(levelname)s|%(message)s', level=logging.DEBUG, filename='log_ana.txt')
 
 """一些错误静态变量"""
-# csv 中的 log_type 类别
-LOG_TYPE = ("credit", "realnameauth", "withdraw")
 
 
 class WorkBookError(Exception):
@@ -25,6 +25,7 @@ class MyWorkBook:
         self.workbook_name = filename
         self.workbook = load_workbook(filename)
         self.sheets_names = self.workbook.get_sheet_names
+        self.date = (filename.split("-")[1] + "-" + filename.split("-")[2]).split('.')[0]  # 取出里面的日期
 
     def get_sheet_by_index(self, index: int) -> Worksheet:
         """根据索引获得工作表"""
@@ -41,79 +42,26 @@ class MyWorkBook:
         self.workbook.save(filename)
         return
 
-
-# csv封装
-class CsvParser:
-    def __init__(self, filename):
-        self.csv_name = filename
-        self.csv_content = list()
-
-    def get_csv_content(self) -> [[], ]:
-        with open(self.csv_name, "r", encoding="utf-8") as f:
-            contents = csv.reader(f)
-            for content in contents:
-                self.csv_content.append(content)
-        return self.csv_content
-
-    def get_csv_head(self):
-        """返回csv的头【第一行】"""
-        return self.csv_content[0]
-
-
-def csv_handler(my_csv: List) -> dict:
-    """解析每一行的数据,返回一个字典{"credit": {"决策拒绝": 10, "反欺诈拒绝": 15, "成功": 100},"withdraw":{},...}"""
-    #   解析旧日志数据要模块 不忍删掉
-    # 初始化盛放结果的一个字典
-    # res = {k:{},...}
-    res = defaultdict(dict)
-    index = 0
-    for row in my_csv:
-        index += 1
-        # 二级字典 获取, 获取不到就使用一个默认值
-        sub_res = res.get(row[0], defaultdict())
-        #  第一列不属于设置的log_type的话略过,为空也略过
-        if row[0].strip() not in LOG_TYPE:
-            if row[0].strip() == '﻿log_type' or row[0].strip() == "":
+    def append_row(self, source_row: list, date="2020-01-01"):
+        work_sheet = self.get_sheet_by_index(0)
+        for x in range(3, 33):
+            add_row = work_sheet.cell(row=x, column=1)
+            # 判断空行,遇到空行就往里面添加日期及统计的数据
+            if not add_row.value:
+                source_row.insert(0, f"{date}")
+                print(source_row)
+                for c in range(0, len(source_row)):
+                    work_sheet.cell(row=add_row.row, column=c + 1).value = source_row[c]
+                return
+            else:
                 continue
-            logging.critical(f"未知类型的log_type:{row[0]},LOG_TYPE中可添加.|csv的{index}行")
-            continue
-        # 第一列属于设置的log_type的话,会处理
-        count = sub_res.get(row[2], 0)
-        try:
-            new_count = int(row[4])
-        except ValueError as e:
-            logging.critical(f"无法转换为数值类型的count:{row[4]}|csv的{index}行")
-            new_count = 0
-        sub_res[row[2]] = count + new_count
-        res[row[0]].update(sub_res)
-    logging.info("succ.")
-    return res
-
-
-import csv
 
 
 class NewCsvHandler:
     """一个新的处理CSV的分析器"""
+
     # 2020-04-12
     def __init__(self, csv_path: str):
-        """用一个csv路径初始化一个解析器
-        并从路径中解析出sourceCode
-        解析出 rows [[],[],],一行为一个内部列表"""
-        self.rows = list()
-        try:
-            with open(csv_path, "r", encoding="GBK", newline="") as f:
-                csv_content = csv.reader(f)
-                for t in csv_content:
-                    self.rows.append(t)
-        except Exception as e:
-            with open(csv_path, "r", encoding="UTF-8", newline="") as f:
-                csv_content = csv.reader(f)
-                for t in csv_content:
-                    self.rows.append(t)
-        finally:
-            sourcecode = csv_path.split("-")[0].split("/")[-1]
-        self.sourceCode = sourcecode
         # 放与excel中差不多对应的结果的
         self.result = []
         self.sum_realname = 0  # 征信总笔数
@@ -142,6 +90,27 @@ class NewCsvHandler:
         self.withdraw_pay_failed = 0  # 支付通道拒绝
         # self.total_amt = 0  # 当日提现总额
         self.withdraw_rate = 1  # 当日提现成功率
+
+        """用一个csv路径初始化一个解析器
+            并从路径中解析出sourceCode
+            解析出 rows [[],[],],一行为一个内部列表"""
+        self.rows = list()
+        try:
+            with open(csv_path, "r", encoding="GBK", newline="") as f:
+                csv_content = csv.reader(f)
+                for t in csv_content:
+                    self.rows.append(t)
+        except Exception as e:
+            try:
+                with open(csv_path, "r", encoding="UTF-8", newline="") as f:
+                    csv_content = csv.reader(f)
+                    for t in csv_content:
+                        self.rows.append(t)
+            except Exception as e:
+                logging.error(e)
+        finally:
+            sourcecode = csv_path.split("-")[0].split("/")[-1]
+        self.sourceCode = sourcecode
 
     def gen_result(self):
         """生成一个列表[,,,],对应相应产品的excel的行里面的数字,
@@ -173,7 +142,7 @@ class NewCsvHandler:
                 if self.ocr_succ != 0 and self.sourceCode.upper() == "TPJF":
                     self.white_box_rate = self.white_box_succ / self.ocr_succ
                 else:
-                    self.white_box_rate = self.realname_succ / self.ocr_succ
+                    self.white_box_rate = self.realname_succ / self.user_unregist
             # 授信
             elif row[0] == "credit":
                 self.sum_credit += int(row[-1])
@@ -211,6 +180,8 @@ class NewCsvHandler:
                 if self.sum_withdraw != 0:
                     self.withdraw_rate = self.withdraw_succ / self.sum_withdraw
         #  将结果组织到
+
+        self.result =[]
         self.result.append(self.sum_realname or 0)
         self.result.append(self.realname_request_failed or 0)
         self.result.append(self.user_already_regist or 0)
@@ -243,43 +214,39 @@ class NewCsvHandler:
 
     def get_result(self):
         return self.result
-    def x(self):
-        # for y in self.rows:
-        #     print(y)
-        print(self.sourceCode)
-        print(self.result)
 
 
-def main():
-    work_book_path = "excels/Sample.xlsx"
-    csv_path = r"csv/source_data/20200409/online_1600000055_20200409_stat.csv"
+def main(csv_path: str, workbook_path: str):
+    ins = NewCsvHandler(csv_path)
+    ins.gen_result()
+    res = ins.get_result()
 
-    my_work_book = MyWorkBook(work_book_path)
-    my_csv = CsvParser(csv_path).get_csv_content()
-
-    # 总览表
-    total_sheet = my_work_book.get_sheet_by_index(0)
-    # 征信分析表
-    credit_query_sheet = my_work_book.get_sheet_by_index(1)
-    # 授信分析表
-    credit_sheet = my_work_book.get_sheet_by_index(2)
-    # 提现分析表
-    withdraw_sheet = my_work_book.get_sheet_by_index(3)
-
-    # 遍历第二行至最后一行,如果只有一行,则退出
-    if len(my_csv) == 1:
-        logging.info(f"{csv_path}-->没有进件")
-        sys.exit(0)
-    #
-    # # 获取分析结果 dict 形式
-    parse_result = csv_handler(my_csv)
-    print(parse_result)
-    ...
+    wb = MyWorkBook(workbook_path)
+    date_tpm = csv_path.split("/")[-1].split("-")[1]  # 20200101
+    date = date_tpm[0:4] + "-" + date_tpm[4:6] + "-" + date_tpm[6:]
+    wb.append_row(res, date)
+    wb.save()
 
 
 if __name__ == '__main__':
-    # main()
-    path1 = "csv/results_output/20200409_qry_res/HB-20200409-qry-res.csv"
-    ins = NewCsvHandler(path1)
-    ins.gen_result()
-    ins.x()
+    def xm():
+        source_codes = ("HB", "TPJF", "LX")
+        # 每日分析结果用的文件名
+        date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y%m%d")
+        files = Utils.gen_res_file_path(date, source_codes)
+        # excel文件名用的日期
+        simple_date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y-%m")
+
+        for f in files:
+            if "TPJF" in f:
+                main(f, f"excels/TPJF-{simple_date}.xlsx")
+            if "HB" in f:
+                main(f, f"excels/HB-{simple_date}.xlsx")
+            if "LX" in f:
+                main(f, f"excels/LX-{simple_date}.xlsx")
+
+
+    xm()
+    # main("csv/results_output/20200402_qry_res/LX-20200402-qry-res.csv","excels/LX-2020-04.xlsx")
+    # path1 = "csv/results_output/20200409_qry_res/TPJF-20200409-qry-res.csv"
+    # wb = MyWorkBook("excels/TPJF-2020-04.xlsx")
