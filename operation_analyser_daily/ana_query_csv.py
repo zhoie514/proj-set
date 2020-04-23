@@ -141,8 +141,10 @@ class NewCsvHandler:
                 #  白盒子通过率 = 白盒子name list 0/ocr成功的
                 if self.ocr_succ != 0 and self.sourceCode.upper() == "TPJF":
                     self.white_box_rate = self.white_box_succ / self.ocr_succ
-                else:
+                elif self.sum_realname != 0:
                     self.white_box_rate = self.realname_succ / self.user_unregist
+                elif self.sum_realname == 0:
+                    self.white_box_rate = "-"  # 缺省值
             # 授信
             elif row[0] == "credit":
                 self.sum_credit += int(row[-1])
@@ -159,6 +161,8 @@ class NewCsvHandler:
                     self.credit_succ += int(row[-1])
                 if self.sum_credit != 0:
                     self.credit_rate = self.credit_succ / self.sum_credit
+                else:
+                    self.credit_rate = "-"  # 总数为0的话，缺省值为 -
             # 提现
             elif row[0] == "withdraw":
                 self.sum_withdraw += int(row[-1])
@@ -179,9 +183,11 @@ class NewCsvHandler:
                     self.withdraw_pay_failed += int(row[-1])
                 if self.sum_withdraw != 0:
                     self.withdraw_rate = self.withdraw_succ / self.sum_withdraw
+                else:
+                    self.withdraw_rate = "-"  # 缺省值 这样可以不计入平均值计算
         #  将结果组织到
 
-        self.result =[]
+        self.result = []
         self.result.append(self.sum_realname or 0)
         self.result.append(self.realname_request_failed or 0)
         self.result.append(self.user_already_regist or 0)
