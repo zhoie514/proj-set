@@ -51,7 +51,7 @@ def sendmail(toAddr: list, att_name: str, date: str):
     MESSAGE = MIMEMultipart()
 
     # 绑定一个正文
-    MESSAGE.attach(MIMEText("Excel版本的统计表:TPJF,HB,LX, 360由于解耦,不好统计,pass", 'plain', "utf8"))
+    MESSAGE.attach(MIMEText("Excel版本的统计表:TPJF,HB,LX", 'plain', "utf8"))
 
     # 定义一个附件
     att1 = MIMEText(open(f'{CONF.ZIP_EXCEL}/{att_name}', 'rb').read(), 'base64', 'utf-8')

@@ -153,13 +153,22 @@ def read_csv(filepath: str, date) -> dict:
             # 针对同一流水号的请求,对方请求N次进行筛选
             # 由于日志是倒序的,相同流水的日志，第一条必然是当天所能统计的终态
             # req_params = json.loads(row_obj["_source"]["extra"]["req_params"])
+            if row_obj["_source"]["log_type"] not in CONF.LOG_TYPE:
+                # 有一个register 事件是202004-23新增的，其内部没有extra字段,导致脚本有个值没取到，bug
+                # 不在规定Log_type内的事件 排除掉，不统计
+                continue
             try:
                 req_params = eval(row_obj["_source"]["extra"]["req_params"])
             except:
-                req_params = eval(row_obj["_source"]["extra"]["loanReqNo"])
+                try:
+                    req_params = eval(row_obj["_source"]["extra"]["loanReqNo"])
+                except:
+                    req_params = {"pbocQueryNo": "null", "loanReqNo": "null"}
             serial = req_params.get('pbocQueryNo', "") or req_params.get('loanReqNo', "")
 
             if serial in uin_serial:
+                if CONF.DEBUG is True and row_obj["_source"]["extra"]["source_code"] == "HB" and row_obj["_source"]["rule_num"] == "50001":
+                    print(serial)
                 continue
             uin_serial.append(serial)
 

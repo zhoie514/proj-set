@@ -141,7 +141,7 @@ class NewCsvHandler:
                 #  白盒子通过率 = 白盒子name list 0/ocr成功的
                 if self.ocr_succ != 0 and self.sourceCode.upper() == "TPJF":
                     self.white_box_rate = self.white_box_succ / self.ocr_succ
-                elif self.sum_realname != 0:
+                elif self.sum_realname != 0 and self.sourceCode.upper() != "TPJF":
                     self.white_box_rate = self.realname_succ / self.user_unregist
                 elif self.sum_realname == 0:
                     self.white_box_rate = "-"  # 缺省值
