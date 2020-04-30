@@ -12,12 +12,12 @@ def un_zip(src_file, dest_dir, password=None):
     ''' 解压单个文件到目标文件夹。'''
     if password:
         password = password.encode()
-    zf = zipfile.ZipFile(src_file)
     try:
+        zf = zipfile.ZipFile(src_file)
         zf.extractall(path=dest_dir, pwd=password)
-    except RuntimeError as e:
+        zf.close()
+    except Exception as e:
         print(e)
-    zf.close()
 
 
 if __name__ == '__main__':

@@ -4,7 +4,6 @@
 """将生成的所有csv 压缩 并邮件发送"""
 import logging
 import os
-import time
 import zipfile
 import smtplib
 from datetime import datetime, timedelta
@@ -81,4 +80,4 @@ if __name__ == '__main__':
     date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y%m%d")
 
     zip_file_name = makezip(f"{CONF.OUTPUT_DIR}/{date}_qry_res", CONF.ZIP_GEN_DIR, force=True)
-    sendmail(CONF.EMAIL_LIST, zip_file_name, date)
+    # sendmail(CONF.EMAIL_LIST, zip_file_name, date)

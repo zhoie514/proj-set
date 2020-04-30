@@ -46,12 +46,12 @@ def makezip(src_dir: str, gen_dir: str, force=False, date="2020-01-01"):
 SENDER = "291958900@QQ.COM"
 
 
-def sendmail(toAddr: list, att_name: str, date: str):
+def sendmail(toAddr: list, att_name: str, date: str, att2: str = ""):
     # 带附件的email 实例
     MESSAGE = MIMEMultipart()
 
     # 绑定一个正文
-    MESSAGE.attach(MIMEText("Excel版本的统计表:TPJF,HB,LX", 'plain', "utf8"))
+    MESSAGE.attach(MIMEText("Excel版本的统计表:TPJF,HB,LX \r\n CSV格式的清洗后的数据包(较小的那个)", 'plain', "utf8"))
 
     # 定义一个附件
     att1 = MIMEText(open(f'{CONF.ZIP_EXCEL}/{att_name}', 'rb').read(), 'base64', 'utf-8')
@@ -67,6 +67,13 @@ def sendmail(toAddr: list, att_name: str, date: str):
     # 邮件的大标题
     SUBJECT = f'{date}-Excel 表格统计'
     MESSAGE['Subject'] = Header(SUBJECT, "utf-8")
+    if att2:
+        # 添加额外的附件
+        att2_name = att2.split('/')[-1]
+        extra_att = MIMEText(open(att2, 'rb').read(), 'base64', 'utf-8')
+        extra_att['Content-Type'] = 'application/octet-stream'
+        extra_att['Content-Disposition'] = f'attachment;filename="{att2_name}"'
+        MESSAGE.attach(extra_att)
     try:
         smtpobj = smtplib.SMTP()
         smtpobj.connect(CONF.MAIL_HOST, 25)
@@ -83,4 +90,5 @@ if __name__ == '__main__':
     date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y%m%d")
 
     zip_file_name = makezip(f"{CONF.ZIP_EXCEL_SOURCE}", CONF.ZIP_EXCEL, force=True, date=date)
-    sendmail(CONF.EMAIL_LIST, zip_file_name, date)
+    att2 = f"csv/gen_zips/{date}_qry_res.zip"
+    sendmail(CONF.EMAIL_LIST, zip_file_name, date, att2=att2)

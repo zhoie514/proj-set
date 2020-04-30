@@ -172,6 +172,8 @@ class NewCsvHandler:
                     self.withdraw_antifraud_reject += int(row[-1])
                 if len(str(row[1])) > 2:
                     self.withdraw_failed += int(row[-1])
+                if row[3] == "request param invalid":
+                    self.withdraw_failed += int(row[-1])
             elif row[0] == "withdraw_query":
                 if row[2] == "处理成功":
                     self.withdraw_succ += int(row[-1])
@@ -194,6 +196,7 @@ class NewCsvHandler:
         self.result.append(self.user_unregist or 0)
         self.result.append(self.ocr_fail or 0)
         self.result.append(self.ocr_succ or 0)
+        # 后面的 insert 位
         self.result.append(self.white_box_rate)
 
         self.result.append(self.sum_credit or 0)
@@ -212,6 +215,7 @@ class NewCsvHandler:
         self.result.append(self.withdraw_pay_failed or 0)
         self.result.append("总额")
         self.result.append(self.withdraw_rate)
+
         if self.sourceCode.upper() == "TPJF":
             self.result.insert(6, self.white_box_succ)
         else:
