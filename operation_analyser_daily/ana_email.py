@@ -51,7 +51,7 @@ def sendmail(toAddr: list, att_name: str, date: str, att2: str = ""):
     MESSAGE = MIMEMultipart()
 
     # 绑定一个正文
-    MESSAGE.attach(MIMEText("Excel版本的统计表:TPJF,HB,LX \r\n CSV格式的清洗后的数据包(较小的那个)", 'plain', "utf8"))
+    MESSAGE.attach(MIMEText("Excel版本的统计表:TPJF,HB,LX,QH \r\n CSV格式为cros日志洗出来的数据", 'plain', "utf8"))
 
     # 定义一个附件
     att1 = MIMEText(open(f'{CONF.ZIP_EXCEL}/{att_name}', 'rb').read(), 'base64', 'utf-8')

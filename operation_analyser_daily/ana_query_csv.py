@@ -1,8 +1,6 @@
 import csv
 import logging
-from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import List
 import CONF
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -10,8 +8,6 @@ from openpyxl.worksheet.worksheet import Worksheet
 import Utils
 
 logging.basicConfig(format='%(asctime)s|%(levelname)s|%(message)s', level=logging.DEBUG, filename='log_ana.txt')
-
-"""一些错误静态变量"""
 
 
 class WorkBookError(Exception):
@@ -72,7 +68,7 @@ class NewCsvHandler:
         self.ocr_succ = 0  # ocr成功笔数
         self.white_box_succ = 0  # 白盒子通过笔数    namelist=0 (太平)
         self.realname_succ = 0  # 其他的就是返回00 就算
-        self.white_box_rate = 1  # 白盒子核准率
+        self.white_box_rate = '-'  # 白盒子核准率
 
         self.sum_credit = 0  # 授信总数
         self.credit_request_failed = 0  # 授信请求出错
@@ -80,7 +76,7 @@ class NewCsvHandler:
         self.credit_reject = 0  # 信用拒绝
         self.credit_net_fail = 0  # 50003网络错误
         self.credit_antifraud_reject = 0  # 50003 反欺诈拒绝
-        self.credit_rate = 1  # 授信核准率
+        self.credit_rate = '-'  # 授信核准率
 
         self.sum_withdraw = 0  # 提现总数
         self.withdraw_failed = 0  # 50005请求失败,网络错误或者啥的,好像用不上
@@ -89,7 +85,11 @@ class NewCsvHandler:
         self.withdraw_ilog_reject = 0  # 提现风控拒绝
         self.withdraw_pay_failed = 0  # 支付通道拒绝
         # self.total_amt = 0  # 当日提现总额
-        self.withdraw_rate = 1  # 当日提现成功率
+        self.withdraw_rate = '-'  # 当日提现成功率
+
+        # 360 专用的字段
+        self.withdraw_pay_origin_trans_failed = 0  # 原交易失败
+        self.withdraw_pay_notexist_trans = 0  # 无此交易
 
         """用一个csv路径初始化一个解析器
             并从路径中解析出sourceCode
@@ -115,6 +115,10 @@ class NewCsvHandler:
     def gen_result(self):
         """生成一个列表[,,,],对应相应产品的excel的行里面的数字,
         其实搞个sqlite会很方便,但算了吧"""
+        # 针对 360-QH 进行的额外补充
+        if self.sourceCode == "QH":
+            self.gen_360_result()
+            return
         # 太平金服有白盒核准率什么的,要单独算
         for row in self.rows:  # [[],[],...] 取出内部的 []
             # 征信
@@ -148,21 +152,38 @@ class NewCsvHandler:
             # 授信
             elif row[0] == "credit":
                 self.sum_credit += int(row[-1])
-                if row[2] == "unknow" and len(row[1]) > 2:
-                    self.credit_net_fail += int(row[-1])
-                if row[-2] == "antifraud reject":
-                    self.credit_antifraud_reject += int(row[-1])
-                if row[1] == "01" and row[-2] != "antifraud reject":
-                    self.credit_request_failed += int(row[-1])
-            elif row[0] == "credit_query":
-                if row[1] == "02":
-                    self.credit_reject += int(row[-1])
-                if row[1] == "01":
-                    self.credit_succ += int(row[-1])
-                if self.sum_credit != 0:
-                    self.credit_rate = self.credit_succ / self.sum_credit
+                if self.sourceCode.upper() == "HB":
+                    # 还呗有了结果回调后就不去查 结果了,所以只能以这个为准
+                    if row[2] == "unknow" and len(row[1]) > 2:
+                        self.credit_net_fail += int(row[-1])
+                    if row[-2] == "antifraud reject":
+                        self.credit_antifraud_reject += int(row[-1])
+                    if row[1] == "01" and row[-2] != "antifraud reject":
+                        self.credit_request_failed += int(row[-1])
+                    if row[1] == "00" and row[2] == "reject":
+                        self.credit_reject += int(row[-1])
+                    if row[1] == "00" and row[2] == "success":
+                        self.credit_succ += int(row[-1])
+                    if self.sum_credit != 0:
+                        self.credit_rate = self.credit_succ / self.sum_credit
                 else:
-                    self.credit_rate = "-"  # 总数为0的话，缺省值为 -
+                    if row[2] == "unknow" and len(row[1]) > 2:
+                        self.credit_net_fail += int(row[-1])
+                    if row[-2] == "antifraud reject":
+                        self.credit_antifraud_reject += int(row[-1])
+                    if row[1] == "01" and row[-2] != "antifraud reject":
+                        self.credit_request_failed += int(row[-1])
+            elif row[0] == "credit_query":
+                if self.sourceCode.upper() != "HB":
+                    # 还呗不能用这个 log_type 方式进行统计了
+                    if row[1] == "02":
+                        self.credit_reject += int(row[-1])
+                    if row[1] == "01":
+                        self.credit_succ += int(row[-1])
+                    if self.sum_credit != 0:
+                        self.credit_rate = self.credit_succ / self.sum_credit
+                    else:
+                        self.credit_rate = "-"  # 总数为0的话，缺省值为 -
             # 提现
             elif row[0] == "withdraw":
                 self.sum_withdraw += int(row[-1])
@@ -174,21 +195,30 @@ class NewCsvHandler:
                     self.withdraw_failed += int(row[-1])
                 if row[3] == "request param invalid":
                     self.withdraw_failed += int(row[-1])
+                # 还呗可能要单独处理一下
+                if self.sourceCode.upper() == "HB":
+                    ...
+                else:
+                    ...
             elif row[0] == "withdraw_query":
-                if row[2] == "处理成功":
-                    self.withdraw_succ += int(row[-1])
                 if row[-2] == "放款失败——ilog拒绝":
                     self.withdraw_ilog_reject += int(row[-1])
-                if len(row[-2]) > 15:
-                    self.withdraw_pay_failed += int(row[-1])
-                if row[-2] == "原交易失败":
-                    self.withdraw_pay_failed += int(row[-1])
-                if self.sum_withdraw != 0:
-                    self.withdraw_rate = self.withdraw_succ / self.sum_withdraw
-                else:
-                    self.withdraw_rate = "-"  # 缺省值 这样可以不计入平均值计算
-        #  将结果组织到
+                if row[-2] == "call loan_mng service timeout":
+                    self.withdraw_pay_failed += int(row[-1])  # 这个归类的支付错误吧
+                if self.sourceCode.upper() != "HB":
+                    # 还呗不能用这个 log_type 方式进行统计了
+                    if row[2] == "处理成功":
+                        self.withdraw_succ += int(row[-1])
+                    if len(row[-2]) > 15:
+                        self.withdraw_pay_failed += int(row[-1])
+                    if row[-2] == "原交易失败":
+                        self.withdraw_pay_failed += int(row[-1])
+                    if self.sum_withdraw != 0:
+                        self.withdraw_rate = self.withdraw_succ / self.sum_withdraw
+                    else:
+                        self.withdraw_rate = "-"  # 缺省值 这样可以不计入平均值计算
 
+        #  将结果组织到
         self.result = []
         self.result.append(self.sum_realname or 0)
         self.result.append(self.realname_request_failed or 0)
@@ -196,9 +226,12 @@ class NewCsvHandler:
         self.result.append(self.user_unregist or 0)
         self.result.append(self.ocr_fail or 0)
         self.result.append(self.ocr_succ or 0)
-        # 后面的 insert 位
+        # 后面的 insert 位 使这个的排列与excel的表头一致
+        if self.sourceCode.upper() == "TPJF":
+            self.result.insert(6, self.white_box_succ)
+        else:
+            self.result.insert(6, self.realname_succ)
         self.result.append(self.white_box_rate)
-
         self.result.append(self.sum_credit or 0)
         self.result.append(self.credit_request_failed or 0)
         self.result.append(self.credit_succ or 0)
@@ -213,22 +246,50 @@ class NewCsvHandler:
         self.result.append(self.withdraw_antifraud_reject or 0)
         self.result.append(self.withdraw_ilog_reject or 0)
         self.result.append(self.withdraw_pay_failed or 0)
-        self.result.append("总额")
+        # self.result.append("总额") # 由于这一列不太重要,每次都要手动去看,故省去,
         self.result.append(self.withdraw_rate)
 
-        if self.sourceCode.upper() == "TPJF":
-            self.result.insert(6, self.white_box_succ)
-        else:
-            self.result.insert(6, self.realname_succ)
-            ...
+    def gen_360_result(self):
+        """针对 360 专门生成结果列表, 360的统计方式与excel表头与另外三个产品大不相同故单独列出来"""
+        for row in self.rows:
+            if row[0] == "withdraw":
+                if row[3] == "禁止注册":
+                    self.user_already_regist += int(row[-1])
+                if row[3] == "授信限制":
+                    self.credit_reject += int(row[-1])
+                if row[3] == "反欺诈拒绝":
+                    self.withdraw_antifraud_reject += int(row[-1])
+            if row[0] == "withdraw_query":
+                if row[1] == "success":
+                    self.withdraw_succ += int(row[-1])
+                if row[2] == "授信拒绝":
+                    self.credit_reject += int(row[-1])
+                if row[2] == "其它错误":
+                    self.withdraw_ilog_reject += int(row[-1])
+                if row[2] == "原交易失败":
+                    self.withdraw_pay_origin_trans_failed += int(row[-1])
+                if row[2] == "无此交易":
+                    self.withdraw_pay_notexist_trans += int(row[-1])
+
+        self.result = []
+        self.result.append(self.withdraw_succ)
+        self.result.append(self.user_already_regist)
+        self.result.append(self.credit_reject)
+        self.result.append(self.withdraw_antifraud_reject)
+        self.result.append(self.withdraw_ilog_reject)
+        self.result.append(self.withdraw_pay_origin_trans_failed)
+        self.result.append(self.withdraw_pay_notexist_trans)
 
     def get_result(self):
         return self.result
 
 
-def main(csv_path: str, workbook_path: str):
+def main(csv_path: str, workbook_path: str, source_code=None):
     ins = NewCsvHandler(csv_path)
-    ins.gen_result()
+    if not source_code:
+        ins.gen_result()
+    elif source_code == "QH":
+        ins.gen_360_result()
     res = ins.get_result()
 
     wb = MyWorkBook(workbook_path)
@@ -240,7 +301,7 @@ def main(csv_path: str, workbook_path: str):
 
 if __name__ == '__main__':
     def xm():
-        source_codes = ("HB", "TPJF", "LX")
+        source_codes = ("HB", "TPJF", "LX", "QH")
         # 每日分析结果用的文件名
         date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y%m%d")
         files = Utils.gen_res_file_path(date, source_codes)
@@ -254,9 +315,8 @@ if __name__ == '__main__':
                 main(f, f"excels/HB-{simple_date}.xlsx")
             if "LX" in f:
                 main(f, f"excels/LX-{simple_date}.xlsx")
+            if "QH" in f:
+                main(f, f"excels/QH-{simple_date}.xlsx", source_code="QH")
 
 
     xm()
-    # main("csv/results_output/20200402_qry_res/LX-20200402-qry-res.csv","excels/LX-2020-04.xlsx")
-    # path1 = "csv/results_output/20200409_qry_res/TPJF-20200409-qry-res.csv"
-    # wb = MyWorkBook("excels/TPJF-2020-04.xlsx")
