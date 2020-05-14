@@ -91,6 +91,10 @@ class NewCsvHandler:
         self.withdraw_pay_origin_trans_failed = 0  # 原交易失败
         self.withdraw_pay_notexist_trans = 0  # 无此交易
 
+        # 临时字段
+        self.realname_schedu_succ = 0  # 50001 返回值为00的，代表流程调度的成功数量
+        self.code_06 = 0  # 50002 反06 白盒查询失败的情况 针对还呗
+
         """用一个csv路径初始化一个解析器
             并从路径中解析出sourceCode
             解析出 rows [[],[],],一行为一个内部列表"""
@@ -125,7 +129,7 @@ class NewCsvHandler:
             if row[0] == "realnameauth":
                 self.sum_realname += int(row[-1])
                 if row[1] == "00":
-                    ...
+                    self.realname_schedu_succ += int(row[-1])
                 if row[1] == "01":
                     self.realname_request_failed += int(row[-1])
                 if row[1] == "03":
@@ -140,8 +144,8 @@ class NewCsvHandler:
                 if row[-2] == "0":
                     #  太平白盒子通过的
                     self.white_box_succ = int(row[-1])
-                #   ocr 成功的  等于  总量 - 请求失败的 - 已注册的(未注册的) - ocr失败的
-                self.ocr_succ = self.user_unregist - self.ocr_fail
+                if row[1] == "06":
+                    self.code_06 += int(row[-1])
                 #  白盒子通过率 = 白盒子name list 0/ocr成功的
                 if self.ocr_succ != 0 and self.sourceCode.upper() == "TPJF":
                     self.white_box_rate = self.white_box_succ / self.ocr_succ
@@ -149,6 +153,8 @@ class NewCsvHandler:
                     self.white_box_rate = self.realname_succ / self.user_unregist
                 elif self.sum_realname == 0:
                     self.white_box_rate = "-"  # 缺省值
+                # ocr成功的 = realnameauth为00的 - ocr失败
+                self.ocr_succ = self.realname_schedu_succ - self.ocr_fail
             # 授信
             elif row[0] == "credit":
                 self.sum_credit += int(row[-1])
@@ -193,7 +199,7 @@ class NewCsvHandler:
                     self.withdraw_antifraud_reject += int(row[-1])
                 if len(str(row[1])) > 2:
                     self.withdraw_failed += int(row[-1])
-                if row[3] == "request param invalid":
+                if row[3] == "request param invalid" or "timeout" in row[3]:
                     self.withdraw_failed += int(row[-1])
                 # 还呗可能要单独处理一下
                 if self.sourceCode.upper() == "HB":
@@ -225,7 +231,13 @@ class NewCsvHandler:
         self.result.append(self.user_already_regist or 0)
         self.result.append(self.user_unregist or 0)
         self.result.append(self.ocr_fail or 0)
-        self.result.append(self.ocr_succ or 0)
+
+        if self.sourceCode == "HB":
+            # 还呗把ocr成功替换为征信查询白盒子失败
+            self.result.append(self.code_06)
+        else:
+            self.result.append(self.ocr_succ or 0)
+
         # 后面的 insert 位 使这个的排列与excel的表头一致
         if self.sourceCode.upper() == "TPJF":
             self.result.insert(6, self.white_box_succ)

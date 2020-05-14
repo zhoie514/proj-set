@@ -105,8 +105,8 @@ def parse_row_obj(obj: dict) -> ():
         rsp_code = obj["_source"]["rsp_code"] or ""
         # 筛选 50002 里面的OCR失败等信息的流水号
         if CONF.DEBUG_50002 == True:
-            if obj["_source"]["extra"]["source_code"].upper() == "HB" and obj["_source"]["rsp_code"] == "04":
-                print("流水号:", obj["_source"]["extra"]["serial_no"])
+            if obj["_source"]["extra"]["source_code"].upper() == "HB" and obj["_source"]["rsp_code"] == "06":
+                print("流水号:", obj["_source"]["extra"]["serial_no"], ":trx:", obj["_source"]["trx"])
         # 针对太平筛选name_list = 1 或 0 的
         if obj["_source"]["extra"]["source_code"].upper() == "TPJF":
             # 处理中的 50002 不会返回name_list,所以做此处理
@@ -125,7 +125,7 @@ def parse_row_obj(obj: dict) -> ():
     if obj["_source"]["rule_num"] in ("50006", "50015"):
         # 筛数据临时用的代码
         if CONF.DEBUG_50006 == True:
-            if obj["_source"]["extra"]["source_code"] == "QH" and obj["_source"]["rsp_msg"] == "":
+            if obj["_source"]["extra"]["source_code"] == "LX" and obj["_source"]["rsp_msg"] == "系统繁忙，请稍后再试":
                 print("流水号:", obj["_source"]["extra"]["serial_no"], " , ", "trx:", obj["_source"]["trx"])
         return (log_type, result, rsp_msg, err, rule_num), 1
     if obj["_source"]["rule_num"] in ("50001", "50003", "50005", "50014"):
