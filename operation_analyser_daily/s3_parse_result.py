@@ -21,6 +21,9 @@ import Utils
 
 logging.basicConfig(format='%(asctime)s|%(levelname)s|%(message)s', level=logging.INFO, filename='log_results.txt')
 
+t = int(time.time())
+# TESTFILE = open(f"./FINDSERIAL/SreialNos-{t}.txt", "w+")
+
 
 def save_file_csv(timestamp: str, obj: dict) -> None:
     """生成每个产品,每个cmd_id对应的 CSV """
@@ -91,50 +94,6 @@ def save_file_csv(timestamp: str, obj: dict) -> None:
                 logging.error(f"cmd_id:{cmd_id}未知错误.")
 
 
-def parse_row_obj(obj: dict) -> ():
-    """解析每一行 数据, 返回元组 与 int(1)"""
-    log_type = obj["_source"]["log_type"] or ""
-    rsp_msg = obj["_source"]["rsp_msg"] or ""
-    err = obj["_source"]["err"] or ""
-    result = obj["_source"]["result"] or ""
-    rule_num = obj["_source"]["rule_num"] or ""
-    name_list = "-999"
-    rsp_code = obj["_source"].get("rsp_code", -999)
-
-    if obj["_source"]["rule_num"] == "50002":
-        rsp_code = obj["_source"]["rsp_code"] or ""
-        # 筛选 50002 里面的OCR失败等信息的流水号
-        if CONF.DEBUG_50002 == True:
-            if obj["_source"]["extra"]["source_code"].upper() == "HB" and obj["_source"]["rsp_code"] == "06":
-                print("流水号:", obj["_source"]["extra"]["serial_no"], ":trx:", obj["_source"]["trx"])
-        # 针对太平筛选name_list = 1 或 0 的
-        if obj["_source"]["extra"]["source_code"].upper() == "TPJF":
-            # 处理中的 50002 不会返回name_list,所以做此处理
-            string = obj["_source"]["extra"]["pbc_data"].encode("utf8")
-            # if string == b"":
-            #     print(obj["_source"]["extra"])
-            if string != b"":
-                name_list = json.loads(string).get("name_list", -1)
-            return (log_type, rsp_code, result, rsp_msg, err, name_list, rule_num), 1
-        return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1
-    # 授信
-    if obj["_source"]["rule_num"] == "50004":
-        rsp_code = obj["_source"]["rsp_code"] or ""
-        return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1
-    # 放款
-    if obj["_source"]["rule_num"] in ("50006", "50015"):
-        # 筛数据临时用的代码
-        if CONF.DEBUG_50006 == True:
-            if obj["_source"]["extra"]["source_code"] == "LX" and obj["_source"]["rsp_msg"] == "系统繁忙，请稍后再试":
-                print("流水号:", obj["_source"]["extra"]["serial_no"], " , ", "trx:", obj["_source"]["trx"])
-        return (log_type, result, rsp_msg, err, rule_num), 1
-    if obj["_source"]["rule_num"] in ("50001", "50003", "50005", "50014"):
-        return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1
-    # 都不符合打印一个错误日志
-    logging.error(f'{obj["_source"]["rule_num"]}|未知的cmd_id')
-    return (), 1
-
-
 # 解析 csv 文件, 并生成产品对应的csv文件
 def read_csv(filepath: str, date) -> dict:
     """解析 CSV 按产品统计"""
@@ -194,6 +153,70 @@ def read_csv(filepath: str, date) -> dict:
     return result
 
 
+def parse_row_obj(obj: dict) -> ():
+    """解析每一行 数据, 返回元组 与 int(1)"""
+    log_type = obj["_source"]["log_type"] or ""
+    rsp_msg = obj["_source"]["rsp_msg"] or ""
+    err = obj["_source"]["err"] or ""
+    result = obj["_source"]["result"] or ""
+    rule_num = obj["_source"]["rule_num"] or ""
+    name_list = "-999"
+    rsp_code = obj["_source"].get("rsp_code", -999)
+
+    if obj["_source"]["rule_num"] == "50002":
+        rsp_code = obj["_source"]["rsp_code"] or ""
+        # 筛选 50002 里面的OCR失败等信息的流水号
+        if CONF.DEBUG_50002 == True:
+            if obj["_source"]["extra"]["source_code"].upper() == "HB" and obj["_source"]["rsp_code"] == "06":
+                print("流水号:", obj["_source"]["extra"]["serial_no"], ":trx:", obj["_source"]["trx"], file=TESTFILE)
+        # 针对太平筛选name_list = 1 或 0 的
+        if obj["_source"]["extra"]["source_code"].upper() == "TPJF":
+            # 处理中的 50002 不会返回name_list,所以做此处理
+            string = obj["_source"]["extra"]["pbc_data"].encode("utf8")
+            # if string == b"":
+            #     print(obj["_source"]["extra"])
+            if string != b"":
+                name_list = json.loads(string).get("name_list", -1)
+            return (log_type, rsp_code, result, rsp_msg, err, name_list, rule_num), 1
+        return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1
+    # 授信
+    if obj["_source"]["rule_num"] == "50004":
+        rsp_code = obj["_source"]["rsp_code"] or ""
+        # 筛数据临时代码
+        if CONF.DEBUG_50004:
+            if obj["_source"]["extra"]["source_code"] == "HB" and obj["_source"]["rsp_msg"] == "处理成功":
+                print("流水号:", obj["_source"]["extra"]["serial_no"], file=TESTFILE)
+        return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1
+    # 放款
+    if obj["_source"]["rule_num"] in ("50006", "50015"):
+        # 筛数据临时用的代码
+        if CONF.DEBUG_50006 == True:
+            if obj["_source"]["extra"]["source_code"] == "LX" and obj["_source"]["rsp_msg"] == "处理成功":
+                # print("流水号,", obj["_source"]["extra"]["serial_no"], ",trx,", obj["_source"]["trx"], file=TESTFILE)
+                # print("流水号:", obj["_source"]["extra"]["serial_no"], " , ", "trx:", obj["_source"]["trx"], file=TESTFILE)
+                print(obj["_source"]["extra"]["serial_no"], ",", sep="", file=TESTFILE)
+        return (log_type, result, rsp_msg, err, rule_num), 1
+    if obj["_source"]["rule_num"] in ("50001", "50003", "50005", "50014"):
+        if CONF.DEBUG_50003:
+            if obj["_source"]["rule_num"] == "50003":
+                if obj["_source"]["extra"]["source_code"] == "HB" and obj["_source"].get("rsp_code", -999) == "00" and \
+                        obj["_source"].get("result", -999) == "success":
+                    print("流水号,", obj["_source"]["extra"]["serial_no"], ",trx,", obj["_source"]["trx"], file=TESTFILE)
+        if CONF.DEBUG_50005:
+            if obj["_source"]["rule_num"] == "50005":
+                if obj["_source"]["extra"]["source_code"] == "LX":
+                    # print(obj["_source"]["extra"]["serial_no"])
+                    # print(tmp_lst)
+                    if str(obj["_source"]["extra"]["serial_no"]) in tmp_lst:
+                        print(obj["_source"]["trx"], file=TESTFILE)
+                    # print("流水号,", obj["_source"]["extra"]["serial_no"], ",trx,", obj["_source"]["trx"],
+                    #           file=TESTFILE)
+        return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1
+    # 都不符合打印一个错误日志
+    logging.error(f'{obj["_source"]["rule_num"]}|未知的cmd_id')
+    return (), 1
+
+
 def make_lite_files(date: str, products: tuple):
     """将单个产品的 50002 50004文件合并，
     有多少个产品->生成多少个文件，减少冗余"""
@@ -224,9 +247,15 @@ def make_lite_files(date: str, products: tuple):
 
 
 if __name__ == "__main__":
+    tmp_lst = []
+    with open("FINDSERIAL/Nos.txt", "r") as f:
+        for line in f.readlines():
+            tmp_lst.append(line.strip())
+    # print(tmp_lst)
+    # exit(9)
     # 转换一下日期,为昨天
     date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y%m%d")
-
+    # print(date)
     filepaths = Utils.gen_filapaths(date, CONF.CMD_ID)
 
 
@@ -253,3 +282,4 @@ if __name__ == "__main__":
     mult_thread_run()
     # sin_thread_run()
     make_lite_files(date, CONF.PRODUCTS)
+    # TESTFILE.close()

@@ -94,6 +94,7 @@ class NewCsvHandler:
         # 临时字段
         self.realname_schedu_succ = 0  # 50001 返回值为00的，代表流程调度的成功数量
         self.code_06 = 0  # 50002 反06 白盒查询失败的情况 针对还呗
+        self.code_04 = 0  # 50002 反04 征信查询失败的情况
 
         """用一个csv路径初始化一个解析器
             并从路径中解析出sourceCode
@@ -123,6 +124,7 @@ class NewCsvHandler:
         if self.sourceCode == "QH":
             self.gen_360_result()
             return
+            # pass
         # 太平金服有白盒核准率什么的,要单独算
         for row in self.rows:  # [[],[],...] 取出内部的 []
             # 征信
@@ -146,6 +148,8 @@ class NewCsvHandler:
                     self.white_box_succ = int(row[-1])
                 if row[1] == "06":
                     self.code_06 += int(row[-1])
+                if row[1] == "04":
+                    self.code_04 += int(row[-1])
                 #  白盒子通过率 = 白盒子name list 0/ocr成功的
                 if self.ocr_succ != 0 and self.sourceCode.upper() == "TPJF":
                     self.white_box_rate = self.white_box_succ / self.ocr_succ
@@ -232,17 +236,20 @@ class NewCsvHandler:
         self.result.append(self.user_unregist or 0)
         self.result.append(self.ocr_fail or 0)
 
-        if self.sourceCode == "HB":
+        if self.sourceCode in ("HB", "LX", "QH"):
             # 还呗把ocr成功替换为征信查询白盒子失败
             self.result.append(self.code_06)
+            self.result.append(self.code_04)
         else:
+            # TPJF
             self.result.append(self.ocr_succ or 0)
 
         # 后面的 insert 位 使这个的排列与excel的表头一致
         if self.sourceCode.upper() == "TPJF":
-            self.result.insert(6, self.white_box_succ)
+            self.result.insert(7, self.white_box_succ)
         else:
-            self.result.insert(6, self.realname_succ)
+            self.result.insert(7, self.realname_succ)
+
         self.result.append(self.white_box_rate)
         self.result.append(self.sum_credit or 0)
         self.result.append(self.credit_request_failed or 0)
@@ -312,10 +319,12 @@ def main(csv_path: str, workbook_path: str, source_code=None):
 
 
 if __name__ == '__main__':
-    def xm():
-        source_codes = ("HB", "TPJF", "LX", "QH")
+    def xm(date: str = None):
+        source_codes = ("HB", "TPJF", "LX",)
+        # source_codes = ("TPJF",)
         # 每日分析结果用的文件名
-        date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y%m%d")
+        if not date:
+            date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y%m%d")
         files = Utils.gen_res_file_path(date, source_codes)
         # excel文件名用的日期
         simple_date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y-%m")
@@ -328,7 +337,9 @@ if __name__ == '__main__':
             if "LX" in f:
                 main(f, f"excels/LX-{simple_date}.xlsx")
             if "QH" in f:
-                main(f, f"excels/QH-{simple_date}.xlsx", source_code="QH")
+                main(f, f"excels/QH-{simple_date}.xlsx", source_code="")
 
 
     xm()
+    # for x in range(20200501,20200519):
+    #     xm(str(x))

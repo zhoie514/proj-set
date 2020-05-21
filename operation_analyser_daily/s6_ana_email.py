@@ -5,7 +5,6 @@
 """将生成的所有csv 压缩 并邮件发送"""
 import logging
 import os
-import time
 import zipfile
 import smtplib
 from datetime import datetime, timedelta
@@ -43,7 +42,7 @@ def makezip(src_dir: str, gen_dir: str, force=False, date="2020-01-01"):
     return F_NAME
 
 
-SENDER = "291958900@QQ.COM"
+SENDER = CONF.MAIL_USER
 
 
 def sendmail(toAddr: list, att_name: str, date: str, att2: str = ""):
@@ -51,7 +50,10 @@ def sendmail(toAddr: list, att_name: str, date: str, att2: str = ""):
     MESSAGE = MIMEMultipart()
 
     # 绑定一个正文
-    MESSAGE.attach(MIMEText("Excel版本的统计表:TPJF,HB,LX,QH \r\n CSV格式为cros日志洗出来的数据", 'plain', "utf8"))
+    if not att2:
+        MESSAGE.attach(MIMEText("上农的各位老师好：\r\n    这是今天的助贷流量的统计，请查收！\r\n    谢谢！", 'plain', "utf8"))
+    else:
+        MESSAGE.attach(MIMEText("说明：Excel版本的统计表是基于CSV内容统计的数据 \r\n [内部数据]", 'plain', "utf8"))
 
     # 定义一个附件
     att1 = MIMEText(open(f'{CONF.ZIP_EXCEL}/{att_name}', 'rb').read(), 'base64', 'utf-8')
@@ -61,7 +63,7 @@ def sendmail(toAddr: list, att_name: str, date: str, att2: str = ""):
     # 绑定此附件
     MESSAGE.attach(att1)
     # 设置发件人
-    MESSAGE['From'] = Header("291958900@qq.com", "utf-8")
+    MESSAGE['From'] = Header(CONF.MAIL_USER, "utf-8")
     # 设置收件人
     MESSAGE['To'] = Header(";".join(toAddr), 'utf-8')
     # 邮件的大标题
@@ -75,8 +77,8 @@ def sendmail(toAddr: list, att_name: str, date: str, att2: str = ""):
         extra_att['Content-Disposition'] = f'attachment;filename="{att2_name}"'
         MESSAGE.attach(extra_att)
     try:
-        smtpobj = smtplib.SMTP()
-        smtpobj.connect(CONF.MAIL_HOST, 25)
+        smtpobj = smtplib.SMTP_SSL()
+        smtpobj.connect(CONF.MAIL_HOST, 465)
         smtpobj.login(CONF.MAIL_USER, CONF.MAIL_PWD)
         smtpobj.sendmail(SENDER, toAddr, MESSAGE.as_string())
         logging.info("send email succ")
@@ -91,4 +93,8 @@ if __name__ == '__main__':
 
     zip_file_name = makezip(f"{CONF.ZIP_EXCEL_SOURCE}", CONF.ZIP_EXCEL, force=True, date=date)
     att2 = f"csv/gen_zips/{date}_qry_res.zip"
-    sendmail(CONF.EMAIL_LIST, zip_file_name, date, att2=att2)
+
+    # 内部发邮件函数
+    # sendmail(CONF.EMAIL_LIST, zip_file_name, date, att2=att2)
+    # 对外发邮件函数
+    sendmail(CONF.EMAIL_LIST_SRCB, zip_file_name, date)
