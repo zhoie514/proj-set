@@ -22,6 +22,8 @@ import Utils
 logging.basicConfig(format='%(asctime)s|%(levelname)s|%(message)s', level=logging.INFO, filename='log_results.txt')
 
 t = int(time.time())
+
+
 # TESTFILE = open(f"./FINDSERIAL/SreialNos-{t}.txt", "w+")
 
 
@@ -199,9 +201,11 @@ def parse_row_obj(obj: dict) -> ():
     if obj["_source"]["rule_num"] in ("50001", "50003", "50005", "50014"):
         if CONF.DEBUG_50003:
             if obj["_source"]["rule_num"] == "50003":
-                if obj["_source"]["extra"]["source_code"] == "HB" and obj["_source"].get("rsp_code", -999) == "00" and \
-                        obj["_source"].get("result", -999) == "success":
-                    print("流水号,", obj["_source"]["extra"]["serial_no"], ",trx,", obj["_source"]["trx"], file=TESTFILE)
+                # if obj["_source"]["extra"]["source_code"] == "LX" and obj["_source"].get("rsp_code", -999) == "00" and \
+                if obj["_source"]["extra"]["serial_no"] in tmp_lst:
+                #         obj["_source"].get("result", -999) == "success":
+                    print(obj["_source"]["extra"]["serial_no"], ",'", obj["_source"]["trx"], file=TESTFILE, sep="")
+                    # print("流水号,", obj["_source"]["extra"]["serial_no"], ",trx,", obj["_source"]["trx"], file=TESTFILE)
         if CONF.DEBUG_50005:
             if obj["_source"]["rule_num"] == "50005":
                 if obj["_source"]["extra"]["source_code"] == "LX":
@@ -255,6 +259,8 @@ if __name__ == "__main__":
     # exit(9)
     # 转换一下日期,为昨天
     date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y%m%d")
+    if CONF.DEBUG_50005 or CONF.DEBUG_50003 or CONF.DEBUG_50004 or CONF.DEBUG_50002 or CONF.DEBUG_50006 or CONF.DEBUG_UIN:
+        TESTFILE = open(f"./FINDSERIAL/{date}-{t}.csv", "w+")
     # print(date)
     filepaths = Utils.gen_filapaths(date, CONF.CMD_ID)
 
