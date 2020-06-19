@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from datetime import datetime, timedelta
-from openpyxl import load_workbook, Workbook
-from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl import load_workbook
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
@@ -12,7 +11,6 @@ import smtplib
 import pandas as pd
 import CONF
 import os
-from os import PathLike
 
 import Utils
 
@@ -216,7 +214,11 @@ class MyExcel:
         return
 
 
-def zipfiles():
+def zipfiles() -> tuple:
+    """
+    压缩文件
+    :return: (内部压缩文件名，外部压缩文件名)
+    """
     if not os.path.isdir(CONF.ZIP_OUT):
         os.makedirs(CONF.ZIP_OUT)
     # 内部邮件附件
@@ -257,6 +259,29 @@ def zipfiles():
     return f_selfy.filename.split('\\')[-1], f_out.filename.split('\\')[-1]
 
 
+def send_email(selfy: str, out: str):
+    # 内部邮件
+    message_selfy = MIMEMultipart()
+    message_selfy.attach(MIMEText("内部的助贷方统计结果\r\n数据源为大数据每日发送的cros_log.xlsx\r\n与对外的区别为：对外只发了部分产品"))
+    attr_selfy = MIMEText(open(os.path.join(CONF.ZIP_OUT, selfy), 'rb').read(), 'base64', 'utf-8')
+    attr_selfy['Content-Type'] = 'application/octet-stream'
+    attr_selfy['Content-Disposition'] = f'attachment;filename="{selfy}"'
+    message_selfy.attach(attr_selfy)
+    message_selfy['From'] = Header("助贷业务数据推送", "utf-8")
+    message_selfy['To'] = Header(';'.join(CONF.EMAIL_SELFY))
+    message_selfy['Subject'] = Header(selfy.split('.')[0], 'utf-8')
+    message_selfy['Title'] = Header("大数据推送", "utf-8")
+
+    try:
+        smt_obj = smtplib.SMTP_SSL()
+        smt_obj.connect(CONF.MAIL_HOST, 465)
+        smt_obj.login(CONF.MAIL_USER, CONF.MAIL_PWD)
+        smt_obj.sendmail(CONF.MAIL_USER, CONF.EMAIL_SELFY, message_selfy.as_string())
+        logging.info(" 内部邮件发送成功 ")
+    except smtplib.SMTPException as e:
+        logging.error(f" 内部邮件发送失败-{e} ")
+
+
 if __name__ == "__main__":
     # filename = Utils.cob_filename(datetime.now())
     # move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, filename)
@@ -272,4 +297,4 @@ if __name__ == "__main__":
     # myexcel.append_row()
 
     a, b = zipfiles()
-    print(a, b)
+    send_email(a, b)

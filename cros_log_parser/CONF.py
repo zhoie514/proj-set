@@ -27,4 +27,17 @@ ZIP_OUT = "./zip_out"
 SELFY_FILES = ["QH", "XL", "HB", "TPJF", "LX", "SQC"]
 OUT_FILES = ["HB", "TPJF", "LX"]
 
+MAIL_HOST = "smtp.exmail.qq.com"
+MAIL_USER = "publica@xwfintech.com"
+MAIL_PWD = "Passw0rd@PA"
+
+# 内部人员邮箱
+# EMAIL_SELFY = ["joshuazhao@xwfintech.com", "yang.gui1@pactera.com", "jiangyongjie@xwfintech.com",
+#                "jordan@xwfintech.com",
+#                "belenbei@xwfintech.com", "291958900@QQ.COM", ]
+EMAIL_SELFY = ['291958900@qq.com']
+EMAIL_SRCB = ['291958900@qq.com']
+# 上农的人员的邮箱 ，不给他们发数据源
+# EMAIL_SRCB = ["chenzheng1@srcb.com", "yangcl@srcb.com", "bianzheng@srcb.com"]
+
 # 以下为修正放款成功的数量,及成功率  相关的配置
