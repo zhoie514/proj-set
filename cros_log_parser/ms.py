@@ -1,5 +1,4 @@
 #!/usr/bin/python 
-# -*- coding: utf-8 -*-
 import logging
 from datetime import datetime, timedelta
 from openpyxl import load_workbook
@@ -252,7 +251,7 @@ def zipfiles() -> tuple:
             out_files.append(prod_file)
 
     for i in out_files:
-        file = i.split('/')[-1]
+        file = i.split('/')[-1].split('\\')[-1]
         f_out.write(i, file)
     f_out.close()
     logging.info(" 压缩包生成-成功 ")
@@ -260,18 +259,17 @@ def zipfiles() -> tuple:
 
 
 def send_email(selfy: str, out: str):
+    print(selfy, out)
     # 内部邮件
     message_selfy = MIMEMultipart()
     message_selfy.attach(MIMEText("内部的助贷方统计结果\r\n数据源为大数据每日发送的cros_log.xlsx\r\n与对外的区别为：对外只发了部分产品"))
     attr_selfy = MIMEText(open(os.path.join(CONF.ZIP_OUT, selfy), 'rb').read(), 'base64', 'utf-8')
     attr_selfy['Content-Type'] = 'application/octet-stream'
-    attr_selfy['Content-Disposition'] = f'attachment;filename="{selfy}"'
+    attr_selfy.add_header('Content-Disposition', 'attachment', filename=('gbk', '', selfy))
     message_selfy.attach(attr_selfy)
     message_selfy['From'] = Header("助贷业务数据推送", "utf-8")
     message_selfy['To'] = Header(';'.join(CONF.EMAIL_SELFY))
     message_selfy['Subject'] = Header(selfy.split('.')[0], 'utf-8')
-    message_selfy['Title'] = Header("大数据推送", "utf-8")
-
     try:
         smt_obj = smtplib.SMTP_SSL()
         smt_obj.connect(CONF.MAIL_HOST, 465)
@@ -280,6 +278,25 @@ def send_email(selfy: str, out: str):
         logging.info(" 内部邮件发送成功 ")
     except smtplib.SMTPException as e:
         logging.error(f" 内部邮件发送失败-{e} ")
+
+    # 对外邮件
+    message_out = MIMEMultipart()
+    message_out.attach(MIMEText("上农的各位老师好：\r\n    这是今天的助贷流量的统计，请查收！\r\n    谢谢！"))
+    attr_out = MIMEText(open(os.path.join(CONF.ZIP_OUT, out), 'rb').read(), 'base64', 'utf-8')
+    attr_out['Content-Type'] = 'application/octet-stream'
+    attr_out.add_header('Content-Disposition', 'attachment', filename=('gbk', '', out))
+    message_out.attach(attr_out)
+    message_out['From'] = Header("助贷业务数据推送", "utf-8")
+    message_out['To'] = Header(';'.join(CONF.EMAIL_SRCB))
+    message_out['Subject'] = Header(out.split('.')[0], 'utf-8')
+    try:
+        smt_obj = smtplib.SMTP_SSL()
+        smt_obj.connect(CONF.MAIL_HOST, 465)
+        smt_obj.login(CONF.MAIL_USER, CONF.MAIL_PWD)
+        smt_obj.sendmail(CONF.MAIL_USER, CONF.EMAIL_SELFY, message_out.as_string())
+        logging.info(" 对外邮件发送成功 ")
+    except smtplib.SMTPException as e:
+        logging.error(f" 对外邮件发送失败-{e} ")
 
 
 if __name__ == "__main__":
