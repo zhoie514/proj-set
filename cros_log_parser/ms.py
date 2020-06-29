@@ -1,22 +1,25 @@
-#!/usr/bin/python 
+#!/usr/bin/python
+import email
 import logging
+import time
 from datetime import datetime, timedelta
+from email.parser import Parser
+
 from openpyxl import load_workbook
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.header import Header
+from email.header import Header, decode_header
 import zipfile
+import re
 import smtplib
+import poplib
+import os
 import pandas as pd
 import CONF
-import os
 
 import Utils
 
 logging.basicConfig(format='%(asctime)s|%(levelname)s|%(message)s', level=logging.INFO, filename='log.txt')
-
-
-# df = pd.read_excel(CONF.EXCEL_TAR_PATH, sheet_name=0)
 
 
 def move_cros_log(source_dir: str, tar_dir: str, file_name: str):
@@ -248,6 +251,97 @@ class FixExcel:
                 # print(self.sheet.cell(row=x, column=1).value)
                 break
         self.wb.save(os.path.join(CONF.EXCEL_OUT, self.sourcecode + ".xlsx"))
+        logging.info(self.sourcecode + " 校对完成")
+
+
+class MyError(Exception):
+    def __init_subclass__(cls, **kwargs):
+        ...
+
+
+class DownEmail:
+    # 自动下载邮件并保存 到系统的下载文件夹
+    def __init__(self, acct=CONF.DOWN_EMAIL_ACCT, pwd=CONF.DOWN_EMAIL_PWD, host=CONF.DOWN_EMAIL_HOST):
+        self._acct = acct
+        self._pwd = pwd
+        self._host = host
+        try:
+            self._server = poplib.POP3_SSL(self._host, port=poplib.POP3_SSL_PORT)
+        except:
+            raise MyError("host链接错误")
+
+    def run(self):
+        self._server.user(self._acct)
+        self._server.pass_(self._pwd)
+        msg_count, msg_size = self._server.stat()
+        resp, mails, octets = self._server.list()
+        for i in range(len(mails), len(mails) - 200, -1):  # 遍历最新的200个邮件就够了，不用看太多
+            if int(mails[i - 1].decode().split(" ")[-1]) > 595001:
+                # 有较大附件的直接跳过
+                continue
+            resp, lines, octets = self._server.retr(i)
+            # 原始文本
+            try:
+                msg_content = b'\r\n'.join(lines).decode('utf-8')
+            except:
+                continue
+            # 解析邮件
+            p = Parser()
+            msg = p.parsestr(msg_content)
+            try:
+                if re.match(".*<(.*)>", msg.get("From")).group(1) != "drbigdata@xwfintech.com":
+                    continue
+            except:
+                continue
+                # assert MyError("没有发件人的邮件")
+            # 当前日期
+            today = datetime.today() + timedelta(days=CONF.OFFSET_DAY + 1)
+            today = str(today).replace('-', '').split(" ")[0]
+            # 邮件的日期
+            try:
+                mail_time = time.strptime(msg.get("Received")[-31:-6], '%a, %d %b %Y %H:%M:%S')
+            except:
+                mail_time = time.strptime(msg.get("Date")[0:24], '%a, %d %b %Y %H:%M:%S')
+            mail_time = time.strftime("%Y%m%d", mail_time)
+            if mail_time != today:
+                # 不是今天的邮件跳过，这样可以设置下载前几天的附件
+                continue
+            DownEmail.get_attr(msg)
+
+            ...
+
+    @staticmethod
+    def decode_str(str_in):
+        value, charset = decode_header(str_in)[0]
+        if charset:
+            value = value.decode(charset)
+        return value
+
+    @staticmethod
+    def get_attr(msg):
+        attr_file = []
+        for part in msg.walk():
+            # 获取附件名称
+            filename = part.get_filename()
+            if filename:
+                h = Header(filename)
+                dh = email.header.decode_header(h)
+                filename = dh[0][0]
+                if dh[0][1]:
+                    filename = DownEmail.decode_str(str(filename, dh[0][1]))
+                if os.path.isfile(os.path.join(CONF.DOWN_EMAIL_DIR, filename)):
+                    logging.info(f"{filename} 已经下载过了。")
+                    return [filename]
+                if False:
+                    # 这里可以改条件，通过不下载某些文件
+                    return
+                file_data = part.get_payload(decode=True)
+                file_obj = open(os.path.join(CONF.DOWN_EMAIL_DIR, filename), "wb")
+                attr_file.append(filename)
+                file_obj.write(file_data)
+                file_obj.close()
+                logging.info(f"{filename} 下载完成。")
+        return attr_file
 
 
 def zipfiles() -> tuple:
@@ -337,6 +431,10 @@ def send_email(selfy: str, out: str):
 
 # 整体的步骤
 def auto_run(fix="HB"):
+    # 下载当天的所有附件
+    down = DownEmail()
+    down.run()
+
     # 处理数据的一套步骤
     filename = Utils.cob_filename(datetime.now())
     move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, filename)
@@ -356,10 +454,16 @@ def auto_run(fix="HB"):
     move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, fix_org_file)
     fix_inst = FixExcel(fix)
     fix_inst.do_fix()
+
     # 压缩并邮件发送
     a, b = zipfiles()
     send_email(a, b)
 
+
+# 下载邮件附件
+def sub0_download_email():
+    dn = DownEmail()
+    dn.run()
 
 # 只生excel的步骤
 def sub1_genexcel():
@@ -394,4 +498,10 @@ def sub3_zipandemail():
 
 
 if __name__ == "__main__":
-    auto_run()
+    # auto_run()
+    # sub1_genexcel()
+    # sub2_fixexcel()
+    # sub3_zipandemail()
+
+
+    ...

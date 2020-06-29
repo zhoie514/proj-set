@@ -14,7 +14,7 @@ PROD_CHANNEL = {"QH": "BL11462119270865695046", "XL": "BL12788823722575292572", 
 # 复制excel后是否把原excel删掉
 CLEAR_SOURCE_EXCEL = 0
 
-OFFSET_DAY = -1
+OFFSET_DAY = -2
 # excel 输出路径
 EXCEL_OUT = "./excels_out"
 # 放款网络错误 err list
@@ -42,4 +42,10 @@ EMAIL_SRCB = ['291958900@qq.com']
 # 上农的人员的邮箱 ，不给他们发全量数据
 # EMAIL_SRCB = ["chenzheng1@srcb.com", "yangcl@srcb.com", "bianzheng@srcb.com"]
 
-# 以下为修正放款成功的数量,及成功率  相关的配置
+# 下载邮件配置
+DOWN_EMAIL_ACCT = "291958900@qq.com"
+# DOWN_EMAIL_PWD = "gfhvfsygnzzpbihj"
+DOWN_EMAIL_PWD = "rvplttdcxccibjjh"
+DOWN_EMAIL_HOST = "pop.qq.com"
+DOWN_EMAIL_DIR = "C:\\Users\\zhoie\\Downloads"
+EXCEPT_FILE = [""]
