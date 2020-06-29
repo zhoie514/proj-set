@@ -40,7 +40,7 @@ class MyWorkBook:
 
     def append_row(self, source_row: list, date="2020-01-01"):
         work_sheet = self.get_sheet_by_index(0)
-        for x in range(3, 33):
+        for x in range(3, 1000):
             add_row = work_sheet.cell(row=x, column=1)
             # 判断空行,遇到空行就往里面添加日期及统计的数据
             if not add_row.value:
@@ -211,10 +211,12 @@ class NewCsvHandler:
                 else:
                     ...
             elif row[0] == "withdraw_query":
-                if row[-2] == "放款失败——ilog拒绝":
+                if row[-2] == "放款失败——ilog拒绝" and row[-3] == "其它错误":
                     self.withdraw_ilog_reject += int(row[-1])
                 if row[-2] == "call loan_mng service timeout":
                     self.withdraw_pay_failed += int(row[-1])  # 这个归类的支付错误吧
+                if row[-3] == "放款失败":  # 这个是进入核心后才失败的,较大概率为支付通道的失败,如原交易等
+                    self.withdraw_pay_failed += int(row[-1])
                 if self.sourceCode.upper() != "HB":
                     # 还呗不能用这个 log_type 方式进行统计了
                     if row[2] == "处理成功":
@@ -328,7 +330,7 @@ if __name__ == '__main__':
         files = Utils.gen_res_file_path(date, source_codes)
         # excel文件名用的日期
         simple_date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y-%m")
-
+        print(simple_date, date)
         for f in files:
             if "TPJF" in f:
                 main(f, f"excels/TPJF-{simple_date}.xlsx")

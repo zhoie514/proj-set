@@ -132,10 +132,11 @@ def read_csv(filepath: str, date) -> dict:
             serial = req_params.get('pbocQueryNo', "") or req_params.get('loanReqNo', "")
 
             if serial in uin_serial:
-                if CONF.DEBUG_UIN is True and row_obj["_source"]["extra"]["source_code"] == "HB" and row_obj["_source"][
-                    "rule_num"] == "50001":
+                if CONF.DEBUG_UIN and row_obj["_source"]["extra"]["source_code"] == "HB" and row_obj["_source"][
+                    "rule_num"] == "50002" and row_obj["_source"]["rsp_code"] == "08":
                     print(serial)
                 continue
+
             uin_serial.append(serial)
 
             # 返回 要统计的字段的 元组形式 （）
@@ -168,17 +169,18 @@ def parse_row_obj(obj: dict) -> ():
     if obj["_source"]["rule_num"] == "50002":
         rsp_code = obj["_source"]["rsp_code"] or ""
         # 筛选 50002 里面的OCR失败等信息的流水号
-        if CONF.DEBUG_50002 == True:
-            if obj["_source"]["extra"]["source_code"].upper() == "HB" and obj["_source"]["rsp_code"] == "06":
-                print("流水号:", obj["_source"]["extra"]["serial_no"], ":trx:", obj["_source"]["trx"], file=TESTFILE)
+        if CONF.DEBUG_50002:
+            if obj["_source"]["extra"]["source_code"].upper() == "HB" and obj["_source"]["err"] == "该手机号已注册当前产品":
+                print("流水号:", obj["_source"]["extra"]["serial_no"], ",trx:", obj["_source"]["trx"], file=TESTFILE)
         # 针对太平筛选name_list = 1 或 0 的
         if obj["_source"]["extra"]["source_code"].upper() == "TPJF":
             # 处理中的 50002 不会返回name_list,所以做此处理
-            string = obj["_source"]["extra"]["pbc_data"].encode("utf8")
+            string = obj["_source"]["extra"]["rsp_params"]
             # if string == b"":
             #     print(obj["_source"]["extra"])
             if string != b"":
-                name_list = json.loads(string).get("name_list", -1)
+                name_list = json.loads(string.get("pbcData", "{}")).get("name_list", "-999")
+                # name_list = json.loads(string).get("pbcData", {}).get("name_list")
             return (log_type, rsp_code, result, rsp_msg, err, name_list, rule_num), 1
         return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1
     # 授信
@@ -192,29 +194,43 @@ def parse_row_obj(obj: dict) -> ():
     # 放款
     if obj["_source"]["rule_num"] in ("50006", "50015"):
         # 筛数据临时用的代码
-        if CONF.DEBUG_50006 == True:
-            if obj["_source"]["extra"]["source_code"] == "LX" and obj["_source"]["rsp_msg"] == "处理成功":
+        if CONF.DEBUG_50006:
+            if obj["_source"]["extra"]["source_code"] == "LX" and obj["_source"]["rsp_msg"] == "其它错误" and \
+                    obj["_source"]["result"] == "unkonwn":
                 # print("流水号,", obj["_source"]["extra"]["serial_no"], ",trx,", obj["_source"]["trx"], file=TESTFILE)
                 # print("流水号:", obj["_source"]["extra"]["serial_no"], " , ", "trx:", obj["_source"]["trx"], file=TESTFILE)
-                print(obj["_source"]["extra"]["serial_no"], ",", sep="", file=TESTFILE)
+                print(obj["_source"]["extra"]["serial_no"], ",", obj["_source"]["trx"], sep="", file=TESTFILE)
         return (log_type, result, rsp_msg, err, rule_num), 1
     if obj["_source"]["rule_num"] in ("50001", "50003", "50005", "50014"):
         if CONF.DEBUG_50003:
             if obj["_source"]["rule_num"] == "50003":
                 # if obj["_source"]["extra"]["source_code"] == "LX" and obj["_source"].get("rsp_code", -999) == "00" and \
                 if obj["_source"]["extra"]["serial_no"] in tmp_lst:
-                #         obj["_source"].get("result", -999) == "success":
+                    #         obj["_source"].get("result", -999) == "success":
                     print(obj["_source"]["extra"]["serial_no"], ",'", obj["_source"]["trx"], file=TESTFILE, sep="")
                     # print("流水号,", obj["_source"]["extra"]["serial_no"], ",trx,", obj["_source"]["trx"], file=TESTFILE)
         if CONF.DEBUG_50005:
             if obj["_source"]["rule_num"] == "50005":
-                if obj["_source"]["extra"]["source_code"] == "LX":
+                if obj["_source"]["extra"]["source_code"] == "HB":
                     # print(obj["_source"]["extra"]["serial_no"])
                     # print(tmp_lst)
                     if str(obj["_source"]["extra"]["serial_no"]) in tmp_lst:
                         print(obj["_source"]["trx"], file=TESTFILE)
                     # print("流水号,", obj["_source"]["extra"]["serial_no"], ",trx,", obj["_source"]["trx"],
                     #           file=TESTFILE)
+        if CONF.DEBUG_50001:
+            if obj["_source"]["rule_num"] == "50001":
+
+                if obj["_source"]["extra"]["source_code"] == "QH":
+                    req_param_str = obj["_source"].get("extra", {}).get("req_params", "{}")
+                    req_param_str = req_param_str.replace("'", '"')
+                    req_param = json.loads(req_param_str)
+                    if req_param.get("queryReason", 0) == "02":
+                        # print(obj["_source"]["uin"])
+                        # print(req_param_str)
+                        if str(obj["_source"]["uin"]) == "0":
+                            print(obj["_source"]["trx"])
+                        # print(obj["_source"]["uin"], file=TESTFILE)
         return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1
     # 都不符合打印一个错误日志
     logging.error(f'{obj["_source"]["rule_num"]}|未知的cmd_id')
@@ -259,7 +275,7 @@ if __name__ == "__main__":
     # exit(9)
     # 转换一下日期,为昨天
     date = (datetime.now() + timedelta(days=CONF.DATE_OFFSET)).strftime("%Y%m%d")
-    if CONF.DEBUG_50005 or CONF.DEBUG_50003 or CONF.DEBUG_50004 or CONF.DEBUG_50002 or CONF.DEBUG_50006 or CONF.DEBUG_UIN:
+    if CONF.DEBUG_50005 or CONF.DEBUG_50003 or CONF.DEBUG_50004 or CONF.DEBUG_50002 or CONF.DEBUG_50006 or CONF.DEBUG_50001:
         TESTFILE = open(f"./FINDSERIAL/{date}-{t}.csv", "w+")
     # print(date)
     filepaths = Utils.gen_filapaths(date, CONF.CMD_ID)

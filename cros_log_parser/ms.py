@@ -213,6 +213,22 @@ class MyExcel:
         return
 
 
+class FixExcel:
+    """ 校对放款成功数据用的 """
+
+    def __init__(self, source_code: str):
+        self.channel = CONF.PROD_CHANNEL.get(source_code.upper(), False)
+        if not self.channel:
+            raise IndexError("source_code 不存在")
+        filename = Utils.fix_filename(datetime.now())
+        if not os.path.isfile(os.path.join(CONF.EXCEL_SOURCE_PATH, filename)):
+            raise FileNotFoundError("文件不存在")
+        self.dtframe = pd.read_excel(os.path.join(CONF.EXCEL_SOURCE_PATH, filename), header=1)
+        self.wb = load_workbook(os.path.join(CONF.EXCEL_OUT, source_code + ".xlsx"))
+
+    def count_succ(self):
+        ...
+
 def zipfiles() -> tuple:
     """
     压缩文件
@@ -259,10 +275,9 @@ def zipfiles() -> tuple:
 
 
 def send_email(selfy: str, out: str):
-    print(selfy, out)
     # 内部邮件
     message_selfy = MIMEMultipart()
-    message_selfy.attach(MIMEText("内部的助贷方统计结果\r\n数据源为大数据每日发送的cros_log.xlsx\r\n与对外的区别为：对外只发了部分产品"))
+    message_selfy.attach(MIMEText("内部的助贷方统计结果\r\n数据源为大数据每日发送的cros_log清洗统计结果.xlsx\r\n与对外的区别为：对外只发了部分产品"))
     attr_selfy = MIMEText(open(os.path.join(CONF.ZIP_OUT, selfy), 'rb').read(), 'base64', 'utf-8')
     attr_selfy['Content-Type'] = 'application/octet-stream'
     attr_selfy.add_header('Content-Disposition', 'attachment', filename=('gbk', '', selfy))
@@ -304,7 +319,7 @@ if __name__ == "__main__":
     # move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, filename)
     # xl_data = pd.read_excel(os.path.join(CONF.EXCEL_TAR_PATH, filename), header=1)
     # xl_data.replace(CONF.PROD_CODE, CONF.PROD_NAME, inplace=True)
-    # # print(xl_data)
+    # print(xl_data)
     # tool = Tool()
     # tool.gen_result(xl_data)
     # res = tool.get_result()
@@ -312,6 +327,8 @@ if __name__ == "__main__":
     #     print(k, ":", res[k])
     # myexcel = MyExcel(res)
     # myexcel.append_row()
+    #
+    fix_inst = FixExcel("HB")
 
-    a, b = zipfiles()
-    send_email(a, b)
+    # a, b = zipfiles()
+    # send_email(a, b)
