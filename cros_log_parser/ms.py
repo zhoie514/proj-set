@@ -218,16 +218,37 @@ class FixExcel:
 
     def __init__(self, source_code: str):
         self.channel = CONF.PROD_CHANNEL.get(source_code.upper(), False)
+        self.sourcecode = source_code
         if not self.channel:
             raise IndexError("source_code 不存在")
         filename = Utils.fix_filename(datetime.now())
-        if not os.path.isfile(os.path.join(CONF.EXCEL_SOURCE_PATH, filename)):
-            raise FileNotFoundError("文件不存在")
-        self.dtframe = pd.read_excel(os.path.join(CONF.EXCEL_SOURCE_PATH, filename), header=1)
-        self.wb = load_workbook(os.path.join(CONF.EXCEL_OUT, source_code + ".xlsx"))
+        self.fpath = os.path.join(CONF.EXCEL_TAR_PATH, filename)
+        if not os.path.isfile(self.fpath):
+            raise FileNotFoundError(f"文件不存在{self.fpath}")
+        self.dtframe = pd.read_excel(self.fpath, header=1)
+        self.wb = load_workbook(os.path.join(CONF.EXCEL_OUT, self.sourcecode + ".xlsx"))
+        self.loan_succ = 0
+        self.pay_fail = 0
+        self.sheet = self.wb.get_sheet_by_name("Sheet1")
+        self.date = ""
 
-    def count_succ(self):
-        ...
+    def do_fix(self):
+        for col, row in self.dtframe.iterrows():
+            if self.channel == row['助代方']:
+                if "1" == str(row['status']):
+                    self.loan_succ = int(row['笔数'])
+                    self.date = str(row['日期'])
+                elif "2" == str(row['status']):
+                    self.pay_fail = int(row['笔数'])
+        for x in range(3, 1000):
+            if str(self.sheet.cell(row=x, column=1).value) == self.date:
+                self.sheet.cell(row=x, column=20).value = self.loan_succ
+                self.sheet.cell(row=x, column=24).value = self.pay_fail
+                self.sheet.cell(row=x, column=25).value = self.loan_succ / int(self.sheet.cell(row=x, column=18).value)
+                # print(self.sheet.cell(row=x, column=1).value)
+                break
+        self.wb.save(os.path.join(CONF.EXCEL_OUT, self.sourcecode + ".xlsx"))
+
 
 def zipfiles() -> tuple:
     """
@@ -314,21 +335,63 @@ def send_email(selfy: str, out: str):
         logging.error(f" 对外邮件发送失败-{e} ")
 
 
-if __name__ == "__main__":
-    # filename = Utils.cob_filename(datetime.now())
-    # move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, filename)
-    # xl_data = pd.read_excel(os.path.join(CONF.EXCEL_TAR_PATH, filename), header=1)
-    # xl_data.replace(CONF.PROD_CODE, CONF.PROD_NAME, inplace=True)
+# 整体的步骤
+def auto_run(fix="HB"):
+    # 处理数据的一套步骤
+    filename = Utils.cob_filename(datetime.now())
+    move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, filename)
+    xl_data = pd.read_excel(os.path.join(CONF.EXCEL_TAR_PATH, filename), header=1)
+    xl_data.replace(CONF.PROD_CODE, CONF.PROD_NAME, inplace=True)
     # print(xl_data)
-    # tool = Tool()
-    # tool.gen_result(xl_data)
-    # res = tool.get_result()
-    # for k in res:
-    #     print(k, ":", res[k])
-    # myexcel = MyExcel(res)
-    # myexcel.append_row()
-    #
-    fix_inst = FixExcel("HB")
+    tool = Tool()
+    tool.gen_result(xl_data)
+    res = tool.get_result()
+    for k in res:
+        print(k, ":", res[k])
+    myexcel = MyExcel(res)
+    myexcel.append_row()
 
-    # a, b = zipfiles()
-    # send_email(a, b)
+    # 校验放款成功数据的一套流程
+    fix_org_file = Utils.fix_filename(datetime.now())
+    move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, fix_org_file)
+    fix_inst = FixExcel(fix)
+    fix_inst.do_fix()
+    # 压缩并邮件发送
+    a, b = zipfiles()
+    send_email(a, b)
+
+
+# 只生excel的步骤
+def sub1_genexcel():
+    # 处理数据的一套步骤
+    filename = Utils.cob_filename(datetime.now())
+    move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, filename)
+    xl_data = pd.read_excel(os.path.join(CONF.EXCEL_TAR_PATH, filename), header=1)
+    xl_data.replace(CONF.PROD_CODE, CONF.PROD_NAME, inplace=True)
+    # print(xl_data)
+    tool = Tool()
+    tool.gen_result(xl_data)
+    res = tool.get_result()
+    for k in res:
+        print(k, ":", res[k])
+    myexcel = MyExcel(res)
+    myexcel.append_row()
+
+
+# 校正放款成功的笔数,fix为哪个产品需要校正
+def sub2_fixexcel(fix="HB"):
+    # 校验放款成功数据的一套流程
+    fix_org_file = Utils.fix_filename(datetime.now())
+    move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, fix_org_file)
+    fix_inst = FixExcel(fix)
+    fix_inst.do_fix()
+
+
+# 压缩及发送邮件的函数
+def sub3_zipandemail():
+    a, b = zipfiles()
+    send_email(a, b)
+
+
+if __name__ == "__main__":
+    auto_run()
