@@ -14,7 +14,7 @@ PROD_CHANNEL = {"QH": "BL11462119270865695046", "XL": "BL12788823722575292572", 
 # 复制excel后是否把原excel删掉
 CLEAR_SOURCE_EXCEL = 0
 
-OFFSET_DAY = -2
+OFFSET_DAY = -1
 # excel 输出路径
 EXCEL_OUT = "./excels_out"
 # 放款网络错误 err list

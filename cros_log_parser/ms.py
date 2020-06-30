@@ -380,6 +380,11 @@ def zipfiles() -> tuple:
         prod_file = os.path.join(CONF.EXCEL_OUT, f"{f}.xlsx")
         if os.path.isfile(prod_file):
             out_files.append(prod_file)
+    #  如果给对方发清洗后的数据则不用append这两个东西，可以在CONF里面加SQC 和 QH ，新农的没办法，导流与助贷的日志不同
+    out_files.append(os.path.join(CONF.DOWN_EMAIL_DIR,
+                                  f'导流_新农业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
+    out_files.append(os.path.join(CONF.DOWN_EMAIL_DIR,
+                                  f'助贷_狮桥,360业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
 
     for i in out_files:
         file = i.split('/')[-1].split('\\')[-1]
@@ -457,13 +462,14 @@ def auto_run(fix="HB"):
 
     # 压缩并邮件发送
     a, b = zipfiles()
-    send_email(a, b)
+    # send_email(a, b)
 
 
 # 下载邮件附件
 def sub0_download_email():
     dn = DownEmail()
     dn.run()
+
 
 # 只生excel的步骤
 def sub1_genexcel():
@@ -498,10 +504,9 @@ def sub3_zipandemail():
 
 
 if __name__ == "__main__":
-    # auto_run()
+    auto_run()
     # sub1_genexcel()
     # sub2_fixexcel()
     # sub3_zipandemail()
-
 
     ...
