@@ -275,7 +275,7 @@ class DownEmail:
         self._server.pass_(self._pwd)
         msg_count, msg_size = self._server.stat()
         resp, mails, octets = self._server.list()
-        for i in range(len(mails), len(mails) - 200, -1):  # 遍历最新的200个邮件就够了，不用看太多
+        for i in range(len(mails), len(mails) - CONF.REC_NUM, -1):  # 遍历最新的N个邮件就够了，不用看太多
             if int(mails[i - 1].decode().split(" ")[-1]) > 595001:
                 # 有较大附件的直接跳过
                 continue
@@ -362,6 +362,12 @@ def zipfiles() -> tuple:
         prod_file = os.path.join(CONF.EXCEL_OUT, f"{f}.xlsx")
         if os.path.isfile(prod_file):
             selfy_files.append(prod_file)
+
+    selfy_files.append(os.path.join(CONF.DOWN_EMAIL_DIR,
+                                    f'导流_新农业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
+    selfy_files.append(os.path.join(CONF.DOWN_EMAIL_DIR,
+                                    f'助贷_狮桥,360业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
+
     # 压缩
     for i in selfy_files:
         file = i.split('/')[-1].split('\\')[-1]
@@ -397,7 +403,8 @@ def zipfiles() -> tuple:
 def send_email(selfy: str, out: str):
     # 内部邮件
     message_selfy = MIMEMultipart()
-    message_selfy.attach(MIMEText("内部的助贷方统计结果\r\n数据源为大数据每日发送的cros_log清洗统计结果.xlsx\r\n与对外的区别为：对外只发了部分产品"))
+    message_selfy.attach(MIMEText(
+        "内部的助贷方统计结果\r\n数据源为大数据每日发送的cros_log清洗统计结果.xlsx\r\n与对外的区别为：对外只发了部分:\r\n(HB.XLSX,TPJF.xlsx,LX.xlsx,助贷XXX.xlsx, 导流xxx.xslx)"))
     attr_selfy = MIMEText(open(os.path.join(CONF.ZIP_OUT, selfy), 'rb').read(), 'base64', 'utf-8')
     attr_selfy['Content-Type'] = 'application/octet-stream'
     attr_selfy.add_header('Content-Disposition', 'attachment', filename=('gbk', '', selfy))
@@ -435,7 +442,7 @@ def send_email(selfy: str, out: str):
 
 
 # 整体的步骤
-def auto_run(fix="HB"):
+def auto_run(fix=("HB",)):
     # 下载当天的所有附件
     down = DownEmail()
     down.run()
@@ -457,7 +464,7 @@ def auto_run(fix="HB"):
     # 校验放款成功数据的一套流程
     fix_org_file = Utils.fix_filename(datetime.now())
     move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, fix_org_file)
-    fix_inst = FixExcel(fix)
+    fix_inst = FixExcel(fix[0])
     fix_inst.do_fix()
 
     # 压缩并邮件发送
@@ -504,9 +511,9 @@ def sub3_zipandemail():
 
 
 if __name__ == "__main__":
-    auto_run()
+    # auto_run()
     # sub1_genexcel()
     # sub2_fixexcel()
-    # sub3_zipandemail()
+    sub3_zipandemail()
 
     ...

@@ -49,3 +49,5 @@ DOWN_EMAIL_PWD = "rvplttdcxccibjjh"
 DOWN_EMAIL_HOST = "pop.qq.com"
 DOWN_EMAIL_DIR = "C:\\Users\\zhoie\\Downloads"
 EXCEPT_FILE = [""]
+# 最近的 N 封邮件
+REC_NUM = 20
