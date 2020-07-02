@@ -435,7 +435,7 @@ def send_email(selfy: str, out: str):
         smt_obj = smtplib.SMTP_SSL()
         smt_obj.connect(CONF.MAIL_HOST, 465)
         smt_obj.login(CONF.MAIL_USER, CONF.MAIL_PWD)
-        smt_obj.sendmail(CONF.MAIL_USER, CONF.EMAIL_SELFY, message_out.as_string())
+        smt_obj.sendmail(CONF.MAIL_USER, CONF.EMAIL_SRCB, message_out.as_string())
         logging.info(" 对外邮件发送成功 ")
     except smtplib.SMTPException as e:
         logging.error(f" 对外邮件发送失败-{e} ")
@@ -469,7 +469,7 @@ def auto_run(fix=("HB",)):
 
     # 压缩并邮件发送
     a, b = zipfiles()
-    # send_email(a, b)
+    send_email(a, b)
 
 
 # 下载邮件附件
@@ -511,9 +511,9 @@ def sub3_zipandemail():
 
 
 if __name__ == "__main__":
-    # auto_run()
+    auto_run()
     # sub1_genexcel()
     # sub2_fixexcel()
-    sub3_zipandemail()
+    # sub3_zipandemail()
 
     ...
