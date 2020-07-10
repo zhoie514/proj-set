@@ -16,7 +16,7 @@ def cob_filename(dt: datetime):
 
 
 def fix_filename(dt: datetime):
-    """生成 核心放款结果 统计_2020-06-28.xlsx 这样的文件名"""
+    """生成 核心放款_2020-06-28.xlsx 这样的文件名"""
     dt_format = (dt + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")
     return f"核心放款_{dt_format}.xlsx "
 

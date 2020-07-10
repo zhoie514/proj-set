@@ -9,6 +9,7 @@ from openpyxl import load_workbook
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header, decode_header
+from email.utils import formataddr
 import zipfile
 import re
 import smtplib
@@ -102,9 +103,9 @@ class Tool:
                     print()
             if row['log_type'] == "realnameauth":
                 self.zx_sum += int(row['count'])
-                if str(row['rsp_code']) == "1":
+                if str(row['rsp_code']) == "1" or len(str(row['rsp_code'])) > 3:
                     self.zx_request_failed += int(row['count'])
-                if str(row['rsp_code']) == '3':
+                elif str(row['rsp_code']) == '3':
                     self.zx_already_regist += int(row['count'])
                 self.zx_unregist = self.zx_sum - self.zx_request_failed - self.zx_already_regist
             if row['log_type'] == 'realnameauth_query':
@@ -404,12 +405,12 @@ def send_email(selfy: str, out: str):
     # 内部邮件
     message_selfy = MIMEMultipart()
     message_selfy.attach(MIMEText(
-        "内部的助贷方统计结果\r\n数据源为大数据每日发送的cros_log清洗统计结果.xlsx\r\n与对外的区别为：对外只发了部分:\r\n(HB.XLSX,TPJF.xlsx,LX.xlsx,助贷XXX.xlsx, 导流xxx.xslx)"))
+        "内部的助贷方统计结果\r\n数据源为大数据每日发送的cros_log清洗统计结果.xlsx\r\n与对外的区别为：\r\n对外只发了部分:(HB.XLSX,TPJF.xlsx,LX.xlsx,WX.xlsx助贷XXX.xlsx, 导流xxx.xslx)"))
     attr_selfy = MIMEText(open(os.path.join(CONF.ZIP_OUT, selfy), 'rb').read(), 'base64', 'utf-8')
     attr_selfy['Content-Type'] = 'application/octet-stream'
     attr_selfy.add_header('Content-Disposition', 'attachment', filename=('gbk', '', selfy))
     message_selfy.attach(attr_selfy)
-    message_selfy['From'] = Header("助贷业务数据推送", "utf-8")
+    message_selfy['From'] = formataddr(["Public-数据推送", "publica@xwfintech.com"])
     message_selfy['To'] = Header(';'.join(CONF.EMAIL_SELFY))
     message_selfy['Subject'] = Header(selfy.split('.')[0], 'utf-8')
     try:
@@ -428,7 +429,7 @@ def send_email(selfy: str, out: str):
     attr_out['Content-Type'] = 'application/octet-stream'
     attr_out.add_header('Content-Disposition', 'attachment', filename=('gbk', '', out))
     message_out.attach(attr_out)
-    message_out['From'] = Header("助贷业务数据推送", "utf-8")
+    message_out['From'] = formataddr(["Public-数据推送", "publica@xwfintech.com"])
     message_out['To'] = Header(';'.join(CONF.EMAIL_SRCB))
     message_out['Subject'] = Header(out.split('.')[0], 'utf-8')
     try:
@@ -452,7 +453,6 @@ def auto_run(fix=("HB",)):
     move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, filename)
     xl_data = pd.read_excel(os.path.join(CONF.EXCEL_TAR_PATH, filename), header=1)
     xl_data.replace(CONF.PROD_CODE, CONF.PROD_NAME, inplace=True)
-    # print(xl_data)
     tool = Tool()
     tool.gen_result(xl_data)
     res = tool.get_result()
@@ -511,9 +511,10 @@ def sub3_zipandemail():
 
 
 if __name__ == "__main__":
-    auto_run()
+    # auto_run()
+    # sub0_download_email()
     # sub1_genexcel()
     # sub2_fixexcel()
-    # sub3_zipandemail()
+    sub3_zipandemail()
 
     ...
