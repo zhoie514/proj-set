@@ -38,7 +38,7 @@ def move_cros_log(source_dir: str, tar_dir: str, file_name: str):
         return 1
     if not os.path.isfile(os.path.join(source_dir, file_name)):
         logging.critical(f" {file_name} 不存在.")
-        return
+        return 1
     with open(os.path.join(source_dir, file_name), "rb") as f:
         with open(os.path.join(tar_dir, file_name), "wb+") as nf:
             nf.write(f.read())
@@ -145,10 +145,13 @@ class Tool:
                 if str(row['production_code']) == "SQC" and row['result'] == "success":
                     self.tx_succ += int(row['count'])
             if row['log_type'] == 'withdraw_query':
-                if row['result'] == "BCMS4027":
+                if row['result'] in ("BCMS4027", "BCMS3021", "BCMS3013"):
                     self.tx_amtques += int(row['count'])
+                if row['production_code'] != "HB":  # 还呗的支付通道拒绝不从这个事件记录里面统计
+                    if row['err'] in ("原交易失败",):
+                        self.tx_pay_failed += int(row['count'])
                 # 核心支付成功与失败通过 核心的成功失败表去纠正,这里统计的成功不做数
-                elif str(row['rsp_code']) == "0":
+                if str(row['rsp_code']) == "0":
                     if str(row['production_code']) != "SQC":
                         self.tx_succ += int(row['count'])
             if self.tx_sum:
@@ -166,14 +169,14 @@ class Tool:
                 self.zx_code_06,
                 self.zx_code_04,
                 self.zx_succ,
-                self.zx_succ_rate,
+                self.zx_succ_rate or '-',
                 self.sx_sum,
                 self.sx_request_failed,
                 self.sx_succ,
                 self.sx_ilog_reject,
                 self.sx_net_failed,
                 self.sx_antifraud_reject,
-                self.sx_succ_rate,
+                self.sx_succ_rate or '-',
                 self.tx_sum,
                 self.tx_request_failed,
                 self.tx_succ,
@@ -187,6 +190,7 @@ class Tool:
             if self.ch_flag:
                 self.inits()
                 self.ch_flag = False
+        return
 
     def get_result(self):
         return self.res
@@ -201,6 +205,7 @@ class MyExcel:
                     {"wb": load_workbook(os.path.join(CONF.EXCEL_OUT, f'{k}.xlsx')),
                      "datas": data[k],
                      "wb_name": f'{k}.xlsx'})
+        return
 
     def append_row(self):
         for dic in self.data_struc:
@@ -208,12 +213,17 @@ class MyExcel:
             data_row = dic.get('datas')
             for grid in range(1, 1000):
                 blank_row = single_sheet.cell(row=grid, column=1)
+                if str(single_sheet.cell(row=grid, column=1).value) == str(data_row[0]):
+                    for col in range(0, len(data_row)):
+                        single_sheet.cell(row=grid, column=col + 1).value = data_row[col]
+                    logging.info(f" {dic['wb_name']} 覆盖写入")
+                    break
                 if not blank_row.value:
                     for col in range(0, len(data_row)):
                         single_sheet.cell(row=blank_row.row, column=col + 1).value = data_row[col]
+                    logging.info(f" {dic.get('wb_name')} 首次写入")
                     break
             dic.get('wb').save(os.path.join(CONF.EXCEL_OUT, dic.get("wb_name")))
-            logging.info(f" {dic.get('wb_name')} 已生成")
         return
 
 
@@ -305,11 +315,10 @@ class DownEmail:
                 mail_time = time.strptime(msg.get("Date")[0:24], '%a, %d %b %Y %H:%M:%S')
             mail_time = time.strftime("%Y%m%d", mail_time)
             if mail_time != today:
-                # 不是今天的邮件跳过，这样可以设置下载前几天的附件
+                # 不是当天的邮件就跳过，这样可以设置下载前几天的附件  判断邮件发送日期是否 = today(依赖conf里面的dayoffset)
                 continue
             DownEmail.get_attr(msg)
-
-            ...
+        return
 
     @staticmethod
     def decode_str(str_in):
@@ -424,7 +433,7 @@ def send_email(selfy: str, out: str):
 
     # 对外邮件
     message_out = MIMEMultipart()
-    message_out.attach(MIMEText("上农的各位老师好：\r\n    这是今天的助贷流量的统计，请查收！\r\n    谢谢！"))
+    message_out.attach(MIMEText("上农的各位老师好：\r\n    这是昨日的助贷流量的统计，请查收！\r\n    谢谢！"))
     attr_out = MIMEText(open(os.path.join(CONF.ZIP_OUT, out), 'rb').read(), 'base64', 'utf-8')
     attr_out['Content-Type'] = 'application/octet-stream'
     attr_out.add_header('Content-Disposition', 'attachment', filename=('gbk', '', out))
@@ -440,6 +449,7 @@ def send_email(selfy: str, out: str):
         logging.info(" 对外邮件发送成功 ")
     except smtplib.SMTPException as e:
         logging.error(f" 对外邮件发送失败-{e} ")
+    return
 
 
 # 整体的步骤
@@ -511,10 +521,10 @@ def sub3_zipandemail():
 
 
 if __name__ == "__main__":
-    # auto_run()
+    auto_run()
     # sub0_download_email()
     # sub1_genexcel()
     # sub2_fixexcel()
-    sub3_zipandemail()
+    # sub3_zipandemail()
 
     ...
