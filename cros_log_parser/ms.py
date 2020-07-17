@@ -463,6 +463,7 @@ def auto_run(fix=("HB",)):
     move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, filename)
     xl_data = pd.read_excel(os.path.join(CONF.EXCEL_TAR_PATH, filename), header=1)
     xl_data.replace(CONF.PROD_CODE, CONF.PROD_NAME, inplace=True)
+    xl_data.replace("HBT", "HB", inplace=True)  # 还呗要新增一个HBT 与HB 本质一样,只是担保公司变了
     tool = Tool()
     tool.gen_result(xl_data)
     res = tool.get_result()
