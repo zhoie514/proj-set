@@ -96,6 +96,6 @@ if __name__ == '__main__':
     att2 = f"csv/gen_zips/{date}_qry_res.zip"
 
     # 内部发邮件函数
-    sendmail(CONF.EMAIL_LIST, zip_file_name, date, att2=att2)
+    # sendmail(CONF.EMAIL_LIST, zip_file_name, date, att2=att2)
     # 对外发邮件函数
-    sendmail(CONF.EMAIL_LIST_SRCB, zip_file_name, date)
+    # sendmail(CONF.EMAIL_LIST_SRCB, zip_file_name, date)

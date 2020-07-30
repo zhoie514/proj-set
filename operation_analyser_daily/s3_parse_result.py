@@ -110,6 +110,7 @@ def read_csv(filepath: str, date) -> dict:
         i = 0  # 计数
         total = len(contents)  # 总记录条数
         uin_serial = []  # 记录唯一流水号
+        row_obj = None
         for row in contents:
             if row.startswith(codecs.BOM_UTF8):
                 row = row.decode("utf8").encode("utf8")
@@ -150,7 +151,11 @@ def read_csv(filepath: str, date) -> dict:
             sub_result[t_key] = new_count
             # 更新 比如 TPJF 内部的 dict
             result[row_obj["_source"]["extra"]["source_code"]].update(sub_result)
-        logging.info(f"{row_obj['_source']['rule_num']}|共有{str(total)}条数据,解析完成{str(i)}条")
+        if row_obj:
+            logging.info(f"{row_obj['_source']['rule_num']}|共有{str(total)}条数据,解析完成{str(i)}条")
+        else:
+            rule_num = filepath.split("_")[-2]
+            logging.critical(f"{rule_num} 的日志为空,跳过解析.")
     #     保存文件
     save_file_csv(date, result)
     return result
@@ -221,16 +226,19 @@ def parse_row_obj(obj: dict) -> ():
         if CONF.DEBUG_50001:
             if obj["_source"]["rule_num"] == "50001":
 
-                if obj["_source"]["extra"]["source_code"] == "QH":
+                if obj["_source"]["extra"]["source_code"] == "WX":
                     req_param_str = obj["_source"].get("extra", {}).get("req_params", "{}")
                     req_param_str = req_param_str.replace("'", '"')
-                    req_param = json.loads(req_param_str)
-                    if req_param.get("queryReason", 0) == "02":
+                    # req_param = json.loads(req_param_str)
+                    # if req_param.get("queryReason", 0) == "02":
                         # print(obj["_source"]["uin"])
                         # print(req_param_str)
-                        if str(obj["_source"]["uin"]) == "0":
-                            print(obj["_source"]["trx"])
+                        # if str(obj["_source"]["uin"]) == "0":
+                        #     print(obj["_source"]["trx"])
                         # print(obj["_source"]["uin"], file=TESTFILE)
+
+                    if obj["_source"]["rsp_code"] == "00":
+                        print(obj["_source"]["phone"], file=TESTFILE)
         return (log_type, rsp_code, result, rsp_msg, err, rule_num), 1
     # 都不符合打印一个错误日志
     logging.error(f'{obj["_source"]["rule_num"]}|未知的cmd_id')

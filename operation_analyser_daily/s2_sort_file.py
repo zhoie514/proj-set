@@ -19,6 +19,7 @@ logging.basicConfig(format='%(asctime)s|%(levelname)s|%(message)s', level=loggin
 def sort_file(filepath: str):
     """将文件按时间戳进行排序 """
     res = list()
+    row_obj = None
     if not os.path.isfile(filepath):
         # 文件不存在 返回
         logging.critical(f"{filepath}:不存在")
@@ -33,7 +34,11 @@ def sort_file(filepath: str):
             row_obj = json.loads(row)
             res.append(row_obj)  # 将字典添加到列表中
     #     打印一下日志,看看记录数量
-    logging.info(f"{row_obj['_source']['rule_num']}|共有{str(total)}条数据,解析完成{len(res)}条")
+    if row_obj:
+        logging.info(f"{row_obj['_source']['rule_num']}|共有{str(total)}条数据,解析完成{len(res)}条")
+    else:
+        rule_num = filepath.split("_")[-2]
+        logging.critical(f"{rule_num} 的日志为空")
     #     保存文件
     # 对列表进行排序
     sorted_res = sorted(res, key=lambda v: v["_source"]['update_time'], reverse=True)
