@@ -262,7 +262,7 @@ class FixExcel:
                 # print(self.sheet.cell(row=x, column=1).value)
                 break
         self.wb.save(os.path.join(CONF.EXCEL_OUT, self.sourcecode + ".xlsx"))
-        logging.info(self.sourcecode + " 校对完成")
+        logging.info(" " + self.sourcecode + " 校对完成")
 
 
 class MyError(Exception):
@@ -290,7 +290,10 @@ class DownEmail:
             if int(mails[i - 1].decode().split(" ")[-1]) > 595001:
                 # 有较大附件的直接跳过
                 continue
-            resp, lines, octets = self._server.retr(i)
+            try:
+                resp, lines, octets = self._server.retr(i)
+            except Exception as e:
+                print(e)
             # 原始文本
             try:
                 msg_content = b'\r\n'.join(lines).decode('utf-8')
@@ -340,7 +343,7 @@ class DownEmail:
                 if dh[0][1]:
                     filename = DownEmail.decode_str(str(filename, dh[0][1]))
                 if os.path.isfile(os.path.join(CONF.DOWN_EMAIL_DIR, filename)):
-                    logging.info(f"{filename} 已经下载过了。")
+                    logging.info(f" {filename} 已经下载过了。")
                     return [filename]
                 if False:
                     # 这里可以改条件，通过不下载某些文件
