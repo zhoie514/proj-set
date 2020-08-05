@@ -140,7 +140,7 @@ class Tool:
                     self.tx_ilog_reject += int(row['count'])
                 if row['err'] == "antifraud reject" and str(row['rsp_code']) == '1':
                     self.tx_antifraud_reject += int(row['count'])
-                if row['err'] in CONF.REQUEST_FAILED:
+                if row['err'] in CONF.REQUEST_FAILED or len(str(row['rsp_code'])) > 2:
                     self.tx_request_failed += int(row['count'])
                 if str(row['production_code']) == "SQC" and row['result'] == "success":
                     self.tx_succ += int(row['count'])
