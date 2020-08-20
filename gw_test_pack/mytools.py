@@ -3,9 +3,11 @@
 import os
 
 import rsa
-from base64 import b64encode,b64decode
+from base64 import b64encode, b64decode
 import uuid
 import time
+
+import CONST_ARGS
 
 
 def gen_uuid() -> str:
@@ -93,7 +95,7 @@ class MyRSA:
             :param hash_method: 'MD5', 'SHA-1','SHA-224', SHA-256', 'SHA-384' or 'SHA-512'.
             :return: a message signature block.
         """
-        pri_key = pri_key or self.jinke_priv_key
+        pri_key = pri_key or self.partner_pri_key
         signature = rsa.sign(data, pri_key, hash_method)
         signature = b64encode(signature)
         return signature
@@ -106,7 +108,7 @@ class MyRSA:
         :param verify_key: client public key
         :return: bool
         """
-        verify_key = verify_key or self.partner_pub_key
+        verify_key = verify_key or self.jinke_pub_key
         signature = b64decode(signature)
 
         try:
@@ -170,7 +172,7 @@ def CreateLogger(logFile):
     handler.setFormatter(formatter)
     logger = logging.getLogger(str(logFile))
     logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(CONST_ARGS.LOG_LEVEL)
     return logger
 
 
@@ -181,26 +183,22 @@ if __name__ == '__main__':
                   f"cases/{sourceCode.upper()}/KEYS/partner_priv_key",
                   f"cases/{sourceCode.upper()}/KEYS/jinke_pub_key",
                   f"cases/{sourceCode.upper()}/KEYS/jinke_priv_key")
-    x = myrsa.encrypt(
-        b'{"appId": f"{CONST_ARGS.APPID}", "pbocqueryNo": "123", "sourceCode": f"{CONST_ARGS.SOURCE_CODE}"}')
+    ori = b'123'
+    x = myrsa.encrypt(ori)
     print("公钥加密结果:", x)
+    # x = b64encode(x)
     y = myrsa.decrypt(x)
     print("私钥解密结果:", y)
 
     # 测试私钥签名,公钥验签是否可用
-    x1 = myrsa.sign(b"123")
+    x1 = myrsa.sign(x)
     print("私钥签名结果:", x1)
-    y1 = myrsa.verify_sign(b"123", x1)
-    # y1 = myrsa.verify_sign(b'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', x1)
+    y1 = myrsa.verify_sign(x, x1)
     print("公钥验签结果:", y1)
     # print((str(uuid.uuid1())))
-
-    # import hashlib
-    #
-    # # 1.实例化一个sha256对象
-    # sha256 = hashlib.sha256()
-    #
-    # # 2.加密原始值-比如密码,需要将字符串转成bytes（字节）
-    # sha256.update('111111'.encode())
-    # print(sha256.hexdigest().encode())
-    # print(type(sha256.hexdigest().encode()))
+    d = b"OSIRs53bqNvRo3ea20I2J1ua/vPu24MESQ4AQZsOoKNg+Lpw63nBgAO2dY4EGsytG33yXBOhRc8yxfXiRw/duHxQUTsT7uCanI2pzjxc9pk9ExcxEh6gqriscOZKPz9Ja0Dnn25RR5FXypfi7UvlYMCDbtu+7zGa5cDth7s0tJ+rqiAj4mCmZHs/g6ZaL22FQu2Vtc4/CGX3oARqyZb2EUXTPbZBlz1+yKX5r8iEtfHhP6gUst/EK7uzuwmc28oWIfG6QRhpMuGmQIKXtYPs7ffFOvbJx40Lz0AjRVXw7YXTR2ijbec4BQyC0PsDc/+RdQbTkpe3YjEZ4aMpVAaVDg=="
+    s = "fDkivKaqQT5bnguYb9nlOD75pXpVKashVptsZNGEtoVs01qxgnjAyi3KYvB2kTs9JoJz64xoCsKSC7CdSmjlK5HnfAPPv7npV5VKGap8vNhj2JycUEA1C3vEELLJ2/EFJ0JVJgsVROVqFx9HVv2aj4MgOLelrFZG4b1bbWH4xrZPnFFpYvzuLE1dwjbrTQhz/0sTz8+36LyFRHdxpw1skTZI3AYbwH4xu/su/nBUEEK09d+4pXYK/wlyPObHVo54FZLixMidnCU5hJYjIiwEHvkGtViJEOK9rqdVYLhUDthKW6xMSk2ToMioKZmyij3phloJUklMo+bgw20+toMELw=="
+    s = s.encode()
+    print(s)
+    y2 = myrsa.verify_sign(d, s)
+    print("xxx:", y2)
