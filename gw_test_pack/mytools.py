@@ -6,8 +6,7 @@ import rsa
 from base64 import b64encode, b64decode
 import uuid
 import time
-
-import CONST_ARGS
+import logging
 
 
 def gen_uuid() -> str:
@@ -163,16 +162,15 @@ def gen_key_pairs():
     return 0
 
 
-def CreateLogger(logFile):
+def CreateLogger(logFile, fmt='%(asctime)s|%(levelname)s|%(message)s', level=logging.DEBUG):
     import logging.handlers
     # handler = logging.handlers.RotatingFileHandler(str(logFile), maxBytes=1024 * 1024 * 500, backupCount=5)
     handler = logging.handlers.RotatingFileHandler(str(logFile))
-    fmt = '%(asctime)s|%(levelname)s|%(message)s'
     formatter = logging.Formatter(fmt)
     handler.setFormatter(formatter)
     logger = logging.getLogger(str(logFile))
     logger.addHandler(handler)
-    logger.setLevel(CONST_ARGS.LOG_LEVEL)
+    logger.setLevel(level)
     return logger
 
 
@@ -184,21 +182,14 @@ if __name__ == '__main__':
                   f"cases/{sourceCode.upper()}/KEYS/jinke_pub_key",
                   f"cases/{sourceCode.upper()}/KEYS/jinke_priv_key")
     ori = b'123'
-    x = myrsa.encrypt(ori)
+    x = myrsa.encrypt(ori, pub_key=myrsa.jinke_pub_key)
     print("公钥加密结果:", x)
     # x = b64encode(x)
-    y = myrsa.decrypt(x)
+    y = myrsa.decrypt(x, pri_key=myrsa.jinke_priv_key)
     print("私钥解密结果:", y)
 
     # 测试私钥签名,公钥验签是否可用
-    x1 = myrsa.sign(x)
+    x1 = myrsa.sign(data=x, pri_key=myrsa.jinke_priv_key)
     print("私钥签名结果:", x1)
-    y1 = myrsa.verify_sign(x, x1)
+    y1 = myrsa.verify_sign(data=x, signature=x1, verify_key=myrsa.jinke_pub_key)
     print("公钥验签结果:", y1)
-    # print((str(uuid.uuid1())))
-    d = b"OSIRs53bqNvRo3ea20I2J1ua/vPu24MESQ4AQZsOoKNg+Lpw63nBgAO2dY4EGsytG33yXBOhRc8yxfXiRw/duHxQUTsT7uCanI2pzjxc9pk9ExcxEh6gqriscOZKPz9Ja0Dnn25RR5FXypfi7UvlYMCDbtu+7zGa5cDth7s0tJ+rqiAj4mCmZHs/g6ZaL22FQu2Vtc4/CGX3oARqyZb2EUXTPbZBlz1+yKX5r8iEtfHhP6gUst/EK7uzuwmc28oWIfG6QRhpMuGmQIKXtYPs7ffFOvbJx40Lz0AjRVXw7YXTR2ijbec4BQyC0PsDc/+RdQbTkpe3YjEZ4aMpVAaVDg=="
-    s = "fDkivKaqQT5bnguYb9nlOD75pXpVKashVptsZNGEtoVs01qxgnjAyi3KYvB2kTs9JoJz64xoCsKSC7CdSmjlK5HnfAPPv7npV5VKGap8vNhj2JycUEA1C3vEELLJ2/EFJ0JVJgsVROVqFx9HVv2aj4MgOLelrFZG4b1bbWH4xrZPnFFpYvzuLE1dwjbrTQhz/0sTz8+36LyFRHdxpw1skTZI3AYbwH4xu/su/nBUEEK09d+4pXYK/wlyPObHVo54FZLixMidnCU5hJYjIiwEHvkGtViJEOK9rqdVYLhUDthKW6xMSk2ToMioKZmyij3phloJUklMo+bgw20+toMELw=="
-    s = s.encode()
-    print(s)
-    y2 = myrsa.verify_sign(d, s)
-    print("xxx:", y2)

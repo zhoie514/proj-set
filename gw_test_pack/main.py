@@ -15,7 +15,6 @@ if len(sys.argv) == 1:
     sys.exit(99)
 
 PROD = sys.argv[1].upper()
-main_logging = CreateLogger(f'cases/{PROD}/log_schedu.log')
 if len(sys.argv) > 2:
     USE_GW = bool(int(sys.argv[2]))
 else:
@@ -28,7 +27,9 @@ except IndexError:
 # 将产品编号临时添加进环境变量
 sys.path.append(f"./cases/{PROD}")
 import sub_main
+import CONST_ARGS
 
+main_logging = CreateLogger(f'cases/{PROD}/log_schedu.log', level=CONST_ARGS.LOG_LEVEL)
 # 是否通过网关 决定是否需要rsa加解密
 myrsa = None
 
@@ -56,4 +57,4 @@ def run(use_gw, sin_cmdid, rsa=myrsa, **kwargs):
 
 
 code, msg = run(USE_GW, SIN_CMDID, myrsa, logging=main_logging)
-print("result:", code, msg)
+print("Process Result:", code, msg)
