@@ -123,13 +123,16 @@ class Tool:
                 self.sx_sum += int(row['count'])
                 if row['result'] == "success" and str(row['rsp_code']) == "0":
                     self.sx_succ += int(row['count'])
-                if row['err'] == "antifraud reject" and str(row['rsp_code']) == "1":
-                    self.sx_antifraud_reject += int(row['count'])
+                if "antifraud" in str(row['err']):
+                    # self.sx_antifraud_reject += int(row['count'])
+                    self.sx_ilog_reject += int(row['count'])  # 反欺诈统计进入信用拒绝
                 if row['result'] == "reject" and str(row['rsp_code']) == "0":
                     self.sx_ilog_reject += int(row['count'])
                 if row['err'] != "antifraud reject" and str(row['rsp_code']) == "1":
                     self.sx_request_failed += int(row['count'])
-                if len(str(row['rsp_code'])) > 2:
+                if len(str(row['rsp_code'])) > 2 and row['production_code'] not in CONF.CREDIT10087:
+                    self.sx_request_failed += int(row['count'])
+                if row['err'] in CONF.REQ_FAIL10087 and row['production_code'] in CONF.CREDIT10087:
                     self.sx_request_failed += int(row['count'])
                 if self.sx_sum:
                     self.sx_succ_rate = self.sx_succ / self.sx_sum
@@ -258,8 +261,15 @@ class FixExcel:
             if str(self.sheet.cell(row=x, column=1).value) == self.date:
                 self.sheet.cell(row=x, column=20).value = self.loan_succ
                 self.sheet.cell(row=x, column=24).value = self.pay_fail
-                self.sheet.cell(row=x, column=25).value = self.loan_succ / int(self.sheet.cell(row=x, column=18).value)
+                # if int(self.sheet.cell(row=x, column=18).value) == 0:
+                # 	break
+                # else:
+                try:
+                    self.sheet.cell(row=x, column=25).value = self.loan_succ / int(
+                        self.sheet.cell(row=x, column=18).value)
                 # print(self.sheet.cell(row=x, column=1).value)
+                except ZeroDivisionError:
+                    print(f"{self.sourcecode} 昨天没有放款")
                 break
         self.wb.save(os.path.join(CONF.EXCEL_OUT, self.sourcecode + ".xlsx"))
         logging.info(" " + self.sourcecode + " 校对完成")
@@ -415,9 +425,11 @@ def zipfiles() -> tuple:
 
 def send_email(selfy: str, out: str):
     # 内部邮件
+    commit = "注:2020-08-19日起,统计维度为用户号,同一用户重复发起的请求会以最新一次为准\r\n"
     message_selfy = MIMEMultipart()
     message_selfy.attach(MIMEText(
-        "内部的助贷方统计结果\r\n数据源为大数据每日发送的cros_log清洗统计结果.xlsx\r\n与对外的区别为：\r\n对外只发了部分:(HB.XLSX,TPJF.xlsx,LX.xlsx,WX.xlsx助贷XXX.xlsx, 导流xxx.xslx)"))
+        f"{commit}内部的助贷方统计结果\r\n数据源为大数据每日推送的cros_log清洗统计结果.xlsx\r\n内部邮件:所有的统计表格\r\n"
+        "外部邮件:HB.xlsx,TPJF.xlsx,LX.xlsx,WX.xlsx,SQ.xlsx,导流_新农业务数据统计_日期.xlsx, 助贷_狮桥,360业务数据统计_日期.xlsx)"))
     attr_selfy = MIMEText(open(os.path.join(CONF.ZIP_OUT, selfy), 'rb').read(), 'base64', 'utf-8')
     attr_selfy['Content-Type'] = 'application/octet-stream'
     attr_selfy.add_header('Content-Disposition', 'attachment', filename=('gbk', '', selfy))
@@ -436,7 +448,7 @@ def send_email(selfy: str, out: str):
 
     # 对外邮件
     message_out = MIMEMultipart()
-    message_out.attach(MIMEText("上农的各位老师好：\r\n    这是昨日的助贷流量的统计，请查收！\r\n    谢谢！"))
+    message_out.attach(MIMEText(f"上农的各位老师好：\r\n    这是昨日的助贷流量的统计，请查收！\r\n  {commit}  谢谢！"))
     attr_out = MIMEText(open(os.path.join(CONF.ZIP_OUT, out), 'rb').read(), 'base64', 'utf-8')
     attr_out['Content-Type'] = 'application/octet-stream'
     attr_out.add_header('Content-Disposition', 'attachment', filename=('gbk', '', out))
@@ -525,10 +537,10 @@ def sub3_zipandemail():
 
 
 if __name__ == "__main__":
-    auto_run()
+    # auto_run()
     # sub0_download_email()
     # sub1_genexcel()
     # sub2_fixexcel()
-    # sub3_zipandemail()
+    sub3_zipandemail()
 
     ...
