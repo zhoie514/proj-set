@@ -84,6 +84,14 @@ class Tool:
         self.tx_amtques = 0  # 额度问题
         self.tx_succ_rate = 0
 
+        # 贷后征信使用的统计字段
+        self.after_loan = []
+        self.zx_succ_after = 0
+        self.zx_sum_after = 0
+        self.zx_request_failed_after = 0
+        self.zx_succ_after = 0
+        self.zx_failed_after = 0
+
         self.ch_flag = False
 
     def gen_result(self, dt: pd.DataFrame):
@@ -157,38 +165,54 @@ class Tool:
                 if str(row['rsp_code']) == "0":
                     if str(row['production_code']) != "SQC":
                         self.tx_succ += int(row['count'])
+            # 贷后查征信的数据统计分析结果
+            if row["log_type"] == "realnameauth_after":
+                self.zx_sum_after += int(row['count'])
+                if row['result'] != "success":
+                    self.zx_request_failed_after += int(row['count'])
+            if row["log_type"] == "realnameauth_query_after":
+                if str(row['rsp_code']) != "0":
+                    self.zx_failed_after = 0
+                if str(row['rsp_code']) == "0":
+                    self.zx_succ_after += int(row['count'])
             if self.tx_sum:
                 self.tx_succ_rate = self.tx_succ / self.tx_sum
+            if row['production_code'] == "QH":
+                self.after_loan.append(self.zx_sum_after)
+                self.after_loan.append(self.zx_request_failed_after)
+                self.after_loan.append(self.zx_succ_after)
+                self.after_loan.append(self.zx_failed_after)
 
             # 上面把数据拿完了
             # 下面组织 一条记录
             self.res[row['production_code']] = [
-                (datetime.now() + timedelta(days=CONF.OFFSET_DAY)).strftime("%Y-%m-%d"),
-                self.zx_sum,
-                self.zx_request_failed,
-                self.zx_already_regist,
-                self.zx_unregist,
-                self.zx_ocr_failed,
-                self.zx_code_06,
-                self.zx_code_04,
-                self.zx_succ,
-                self.zx_succ_rate or '-',
-                self.sx_sum,
-                self.sx_request_failed,
-                self.sx_succ,
-                self.sx_ilog_reject,
-                self.sx_net_failed,
-                self.sx_antifraud_reject,
-                self.sx_succ_rate or '-',
-                self.tx_sum,
-                self.tx_request_failed,
-                self.tx_succ,
-                self.tx_antifraud_reject,
-                self.tx_ilog_reject,
-                self.tx_amtques,
-                self.tx_pay_failed,
-                self.tx_succ_rate or '-'
-            ]
+                                                   (datetime.now() + timedelta(days=CONF.OFFSET_DAY)).strftime(
+                                                       "%Y-%m-%d"),
+                                                   self.zx_sum,
+                                                   self.zx_request_failed,
+                                                   self.zx_already_regist,
+                                                   self.zx_unregist,
+                                                   self.zx_ocr_failed,
+                                                   self.zx_code_06,
+                                                   self.zx_code_04,
+                                                   self.zx_succ,
+                                                   self.zx_succ_rate or '-',
+                                                   self.sx_sum,
+                                                   self.sx_request_failed,
+                                                   self.sx_succ,
+                                                   self.sx_ilog_reject,
+                                                   self.sx_net_failed,
+                                                   self.sx_antifraud_reject,
+                                                   self.sx_succ_rate or '-',
+                                                   self.tx_sum,
+                                                   self.tx_request_failed,
+                                                   self.tx_succ,
+                                                   self.tx_antifraud_reject,
+                                                   self.tx_ilog_reject,
+                                                   self.tx_amtques,
+                                                   self.tx_pay_failed,
+                                                   self.tx_succ_rate or '-'
+                                               ] + self.after_loan
             # 判断是否要换一个产品了
             if self.ch_flag:
                 self.inits()
@@ -387,9 +411,9 @@ def zipfiles() -> tuple:
             selfy_files.append(prod_file)
 
     selfy_files.append(os.path.join(CONF.DOWN_EMAIL_DIR,
-                                    f'导流_新农业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
+                                    f'导流_业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
     selfy_files.append(os.path.join(CONF.DOWN_EMAIL_DIR,
-                                    f'助贷_狮桥,360业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
+                                    f'助贷_业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
 
     # 压缩
     for i in selfy_files:
@@ -411,9 +435,9 @@ def zipfiles() -> tuple:
             out_files.append(prod_file)
     #  如果给对方发清洗后的数据则不用append这两个东西，可以在CONF里面加SQC 和 QH ，新农的没办法，导流与助贷的日志不同
     out_files.append(os.path.join(CONF.DOWN_EMAIL_DIR,
-                                  f'导流_新农业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
+                                  f'导流_业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
     out_files.append(os.path.join(CONF.DOWN_EMAIL_DIR,
-                                  f'助贷_狮桥,360业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
+                                  f'助贷_业务数据统计_{(datetime.now() + timedelta(days=CONF.OFFSET_DAY + 1)).strftime("%Y-%m-%d")}.xlsx'))
 
     for i in out_files:
         file = i.split('/')[-1].split('\\')[-1]
@@ -425,11 +449,12 @@ def zipfiles() -> tuple:
 
 def send_email(selfy: str, out: str):
     # 内部邮件
-    commit = "注:2020-08-19日起,统计维度为用户号,同一用户重复发起的请求会以最新一次为准\r\n"
+    # commit = "注:2020-08-19日起,统计维度为用户号,同一用户重复发起的请求会以最新一次为准\r\n"
+    commit = ""
     message_selfy = MIMEMultipart()
     message_selfy.attach(MIMEText(
         f"{commit}内部的助贷方统计结果\r\n数据源为大数据每日推送的cros_log清洗统计结果.xlsx\r\n内部邮件:所有的统计表格\r\n"
-        "外部邮件:HB.xlsx,TPJF.xlsx,LX.xlsx,WX.xlsx,SQ.xlsx,导流_新农业务数据统计_日期.xlsx, 助贷_狮桥,360业务数据统计_日期.xlsx)"))
+        "外部邮件:HB.xlsx,TPJF.xlsx,LX.xlsx,WX.xlsx,SQ.xlsx,导流_业务数据统计_日期.xlsx, 助贷_业务数据统计_日期.xlsx)"))
     attr_selfy = MIMEText(open(os.path.join(CONF.ZIP_OUT, selfy), 'rb').read(), 'base64', 'utf-8')
     attr_selfy['Content-Type'] = 'application/octet-stream'
     attr_selfy.add_header('Content-Disposition', 'attachment', filename=('gbk', '', selfy))
@@ -537,10 +562,10 @@ def sub3_zipandemail():
 
 
 if __name__ == "__main__":
-    # auto_run()
+    auto_run()
     # sub0_download_email()
     # sub1_genexcel()
     # sub2_fixexcel()
-    sub3_zipandemail()
+    # sub3_zipandemail()
 
     ...
