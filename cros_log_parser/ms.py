@@ -175,13 +175,12 @@ class Tool:
                     self.zx_failed_after = 0
                 if str(row['rsp_code']) == "0":
                     self.zx_succ_after += int(row['count'])
+
             if self.tx_sum:
                 self.tx_succ_rate = self.tx_succ / self.tx_sum
             if row['production_code'] == "QH":
-                self.after_loan.append(self.zx_sum_after)
-                self.after_loan.append(self.zx_request_failed_after)
-                self.after_loan.append(self.zx_succ_after)
-                self.after_loan.append(self.zx_failed_after)
+                self.after_loan = [self.zx_sum_after, self.zx_request_failed_after, self.zx_succ_after,
+                                   self.zx_failed_after]
 
             # 上面把数据拿完了
             # 下面组织 一条记录
@@ -454,7 +453,7 @@ def send_email(selfy: str, out: str):
     message_selfy = MIMEMultipart()
     message_selfy.attach(MIMEText(
         f"{commit}内部的助贷方统计结果\r\n数据源为大数据每日推送的cros_log清洗统计结果.xlsx\r\n内部邮件:所有的统计表格\r\n"
-        "外部邮件:HB.xlsx,TPJF.xlsx,LX.xlsx,WX.xlsx,SQ.xlsx,导流_业务数据统计_日期.xlsx, 助贷_业务数据统计_日期.xlsx)"))
+        "外部邮件:HB.xlsx,TPJF.xlsx,LX.xlsx,WX.xlsx,SQ.xlsx,QH.xlsx,导流_业务数据统计_#日期#.xlsx, 助贷_业务数据统计_#日期#.xlsx)"))
     attr_selfy = MIMEText(open(os.path.join(CONF.ZIP_OUT, selfy), 'rb').read(), 'base64', 'utf-8')
     attr_selfy['Content-Type'] = 'application/octet-stream'
     attr_selfy.add_header('Content-Disposition', 'attachment', filename=('gbk', '', selfy))
@@ -494,6 +493,11 @@ def send_email(selfy: str, out: str):
 
 # 整体的步骤
 def auto_run(fix=("HB",)):
+    """
+
+    :param fix: 需要利用核心放款状态去校对的产品
+    :return:
+    """
     # 下载当天的所有附件
     down = DownEmail()
     down.run()
