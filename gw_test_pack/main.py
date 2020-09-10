@@ -42,8 +42,8 @@ if USE_GW:
                       jinke_pub_key=f"./cases/{PROD}/KEYS/jinke_pub_key",
                       jinke_priv_key=f"./cases/{PROD}/KEYS/jinke_priv_key")
     except Exception as e:
-        main_logging.info(f"log|rsa密钥加载失败:{e}")
-    main_logging.info(f"log|rsa密钥加载完成")
+        main_logging.info(f"log|rsa key load Error:{e}")
+    main_logging.info(f"log|rsa key load Success")
 
 
 def run(use_gw, sin_cmdid, rsa=myrsa, **kwargs):

@@ -181,6 +181,10 @@ if __name__ == '__main__':
                   f"cases/{sourceCode.upper()}/KEYS/partner_priv_key",
                   f"cases/{sourceCode.upper()}/KEYS/jinke_pub_key",
                   f"cases/{sourceCode.upper()}/KEYS/jinke_priv_key")
+    myrsa.jinke_pub_key
+    myrsa.jinke_priv_key
+    myrsa.partner_pri_key
+    myrsa.partner_pub_key
     ori = b'123'
     x = myrsa.encrypt(ori, pub_key=myrsa.jinke_pub_key)
     print("公钥加密结果:", x)
