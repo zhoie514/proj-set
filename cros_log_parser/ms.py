@@ -111,47 +111,57 @@ class Tool:
                     print()
             if row['log_type'] == "realnameauth":
                 self.zx_sum += int(row['count'])
-                if str(row['rsp_code']) == "1" or len(str(row['rsp_code'])) > 3:
+                if str(int(row['rsp_code'])) == "1" or len(str(int(row['rsp_code']))) > 3:
                     self.zx_request_failed += int(row['count'])
-                elif str(row['rsp_code']) == '3':
+                elif str(int(row['rsp_code'])) == '3':
                     self.zx_already_regist += int(row['count'])
                 self.zx_unregist = self.zx_sum - self.zx_request_failed - self.zx_already_regist
             if row['log_type'] == 'realnameauth_query':
-                if str(row['rsp_code']) == "8":
+                if str(int(row['rsp_code'])) == "8":
                     self.zx_ocr_failed += int(row['count'])
-                if str(row['rsp_code']) == "4":
+                if str(int(row['rsp_code'])) == "4":
                     self.zx_code_04 = int(row['count'])
-                if str(row['rsp_code']) == "6":
+                if str(int(row['rsp_code'])) == "6":
                     self.zx_code_06 = int(row['count'])
-                if str(row['rsp_code']) == "0":
+                if str(int(row['rsp_code'])) == "0":
                     self.zx_succ = int(row['count'])
                 if self.zx_sum:
                     self.zx_succ_rate = self.zx_succ / self.zx_sum
             if row['log_type'] == "credit":
                 self.sx_sum += int(row['count'])
-                if row['result'] == "success" and str(row['rsp_code']) == "0":
+                if row['result'] == "success" and str(int(row['rsp_code'])) == "0":
                     self.sx_succ += int(row['count'])
                 if "antifraud" in str(row['err']):
                     # self.sx_antifraud_reject += int(row['count'])
                     self.sx_ilog_reject += int(row['count'])  # 反欺诈统计进入信用拒绝
-                if row['result'] == "reject" and str(row['rsp_code']) == "0":
+                if row['result'] == "reject" and str(int(row['rsp_code'])) == "0":
                     self.sx_ilog_reject += int(row['count'])
-                if row['err'] != "antifraud reject" and str(row['rsp_code']) == "1":
+                if row['err'] != "antifraud reject" and str(int(row['rsp_code'])) == "1":
                     self.sx_request_failed += int(row['count'])
-                if len(str(row['rsp_code'])) > 2 and row['production_code'] not in CONF.CREDIT10087:
+                if len(str(int(row['rsp_code']))) > 2 and row['production_code'] not in CONF.CREDIT10087:
                     self.sx_request_failed += int(row['count'])
                 if row['err'] in CONF.REQ_FAIL10087 and row['production_code'] in CONF.CREDIT10087:
                     self.sx_request_failed += int(row['count'])
                 if self.sx_sum:
                     self.sx_succ_rate = self.sx_succ / self.sx_sum
+            if row['log_type'] == 'credit_query':
+                if row["production_code"] == "LZC":
+                    if row["result"] == "success":
+                        self.sx_succ = 0
+                        self.sx_succ += int(row['count'])
+                    if row["result"] == "reject":
+                        self.sx_ilog_reject = 0
+                        self.sx_ilog_reject += int(row['count'])
+                    if self.sx_sum:
+                        self.sx_succ_rate = self.sx_succ / self.sx_sum
             if row['log_type'] == 'withdraw':
                 if row['result'] != "review":
                     self.tx_sum += int(row['count'])
-                if row['result'] == "reject" and str(row['rsp_code']) == '0':
-                    self.tx_ilog_reject += int(row['count'])
-                if row['err'] == "antifraud reject" and str(row['rsp_code']) == '1':
+                # if row['result'] == "reject" and str(int(row['rsp_code'])) == '0':
+                #     self.tx_ilog_reject += int(row['count'])
+                if row['err'] == "antifraud reject" and str(int(row['rsp_code'])) == '1':
                     self.tx_antifraud_reject += int(row['count'])
-                if row['err'] in CONF.REQUEST_FAILED or len(str(row['rsp_code'])) > 2:
+                if row['err'] in CONF.REQUEST_FAILED or len(str(int(row['rsp_code']))) > 2:
                     self.tx_request_failed += int(row['count'])
                 if str(row['production_code']) == "SQC" and row['result'] == "success":
                     self.tx_succ += int(row['count'])
@@ -161,8 +171,11 @@ class Tool:
                 if row['production_code'] != "HB":  # 还呗的支付通道拒绝不从这个事件记录里面统计
                     if row['err'] in ("原交易失败",):
                         self.tx_pay_failed += int(row['count'])
+                    if row['err'] == "放款失败——ilog拒绝":
+                        self.tx_ilog_reject += int(row['count'])
+                        self.tx_ilog_reject -= self.tx_antifraud_reject
                 # 核心支付成功与失败通过 核心的成功失败表去纠正,这里统计的成功不做数
-                if str(row['rsp_code']) == "0":
+                if str(int(row['rsp_code'])) == "0":
                     if str(row['production_code']) != "SQC":
                         self.tx_succ += int(row['count'])
             # 贷后查征信的数据统计分析结果
@@ -171,11 +184,14 @@ class Tool:
                 if row['result'] != "success":
                     self.zx_request_failed_after += int(row['count'])
             if row["log_type"] == "realnameauth_query_after":
-                if str(row['rsp_code']) != "0":
+                if str(int(row['rsp_code'])) != "0":
                     self.zx_failed_after = 0
-                if str(row['rsp_code']) == "0":
+                if str(int(row['rsp_code'])) == "0":
                     self.zx_succ_after += int(row['count'])
-
+            if row['log_type'] == "register":
+                continue
+            if row['log_type'] == "register_query":
+                continue
             if self.tx_sum:
                 self.tx_succ_rate = self.tx_succ / self.tx_sum
             if row['production_code'] == "QH":
@@ -446,48 +462,49 @@ def zipfiles() -> tuple:
     return f_selfy.filename.split('\\')[-1], f_out.filename.split('\\')[-1]
 
 
-def send_email(selfy: str, out: str):
+def send_email(selfy: str = "", out: str = ""):
     # 内部邮件
     # commit = "注:2020-08-19日起,统计维度为用户号,同一用户重复发起的请求会以最新一次为准\r\n"
     commit = ""
-    message_selfy = MIMEMultipart()
-    message_selfy.attach(MIMEText(
-        f"{commit}内部的助贷方统计结果\r\n数据源为大数据每日推送的cros_log清洗统计结果.xlsx\r\n内部邮件:所有的统计表格\r\n"
-        "外部邮件:HB.xlsx,TPJF.xlsx,LX.xlsx,WX.xlsx,SQ.xlsx,QH.xlsx,导流_业务数据统计_#日期#.xlsx, 助贷_业务数据统计_#日期#.xlsx)"))
-    attr_selfy = MIMEText(open(os.path.join(CONF.ZIP_OUT, selfy), 'rb').read(), 'base64', 'utf-8')
-    attr_selfy['Content-Type'] = 'application/octet-stream'
-    attr_selfy.add_header('Content-Disposition', 'attachment', filename=('gbk', '', selfy))
-    message_selfy.attach(attr_selfy)
-    message_selfy['From'] = formataddr(["Public-数据推送", "publica@xwfintech.com"])
-    message_selfy['To'] = Header(';'.join(CONF.EMAIL_SELFY))
-    message_selfy['Subject'] = Header(selfy.split('.')[0], 'utf-8')
-    try:
-        smt_obj = smtplib.SMTP_SSL()
-        smt_obj.connect(CONF.MAIL_HOST, 465)
-        smt_obj.login(CONF.MAIL_USER, CONF.MAIL_PWD)
-        smt_obj.sendmail(CONF.MAIL_USER, CONF.EMAIL_SELFY, message_selfy.as_string())
-        logging.info(" 内部邮件发送成功 ")
-    except smtplib.SMTPException as e:
-        logging.error(f" 内部邮件发送失败-{e} ")
-
-    # 对外邮件
-    message_out = MIMEMultipart()
-    message_out.attach(MIMEText(f"上农的各位老师好：\r\n    这是昨日的助贷流量的统计，请查收！\r\n  {commit}  谢谢！"))
-    attr_out = MIMEText(open(os.path.join(CONF.ZIP_OUT, out), 'rb').read(), 'base64', 'utf-8')
-    attr_out['Content-Type'] = 'application/octet-stream'
-    attr_out.add_header('Content-Disposition', 'attachment', filename=('gbk', '', out))
-    message_out.attach(attr_out)
-    message_out['From'] = formataddr(["Public-数据推送", "publica@xwfintech.com"])
-    message_out['To'] = Header(';'.join(CONF.EMAIL_SRCB))
-    message_out['Subject'] = Header(out.split('.')[0], 'utf-8')
-    try:
-        smt_obj = smtplib.SMTP_SSL()
-        smt_obj.connect(CONF.MAIL_HOST, 465)
-        smt_obj.login(CONF.MAIL_USER, CONF.MAIL_PWD)
-        smt_obj.sendmail(CONF.MAIL_USER, CONF.EMAIL_SRCB, message_out.as_string())
-        logging.info(" 对外邮件发送成功 ")
-    except smtplib.SMTPException as e:
-        logging.error(f" 对外邮件发送失败-{e} ")
+    if selfy:
+        message_selfy = MIMEMultipart()
+        message_selfy.attach(MIMEText(
+            f"{commit}内部的助贷方统计结果\r\n数据源为大数据每日推送的cros_log清洗统计结果.xlsx\r\n内部邮件:所有的统计表格\r\n"
+            "外部邮件:HB.xlsx,TPJF.xlsx,LX.xlsx,WX.xlsx,SQ.xlsx,QH.xlsx, 导流_业务数据统计_#日期#.xlsx, 助贷_业务数据统计_#日期#.xlsx)"))
+        attr_selfy = MIMEText(open(os.path.join(CONF.ZIP_OUT, selfy), 'rb').read(), 'base64', 'utf-8')
+        attr_selfy['Content-Type'] = 'application/octet-stream'
+        attr_selfy.add_header('Content-Disposition', 'attachment', filename=('gbk', '', selfy))
+        message_selfy.attach(attr_selfy)
+        message_selfy['From'] = formataddr(["Public-数据推送", "publica@xwfintech.com"])
+        message_selfy['To'] = Header(';'.join(CONF.EMAIL_SELFY))
+        message_selfy['Subject'] = Header(selfy.split('.')[0], 'utf-8')
+        try:
+            smt_obj = smtplib.SMTP_SSL()
+            smt_obj.connect(CONF.MAIL_HOST, 465)
+            smt_obj.login(CONF.MAIL_USER, CONF.MAIL_PWD)
+            smt_obj.sendmail(CONF.MAIL_USER, CONF.EMAIL_SELFY, message_selfy.as_string())
+            logging.info(" 内部邮件发送成功 ")
+        except smtplib.SMTPException as e:
+            logging.error(f" 内部邮件发送失败-{e} ")
+    if out:
+        # 对外邮件
+        message_out = MIMEMultipart()
+        message_out.attach(MIMEText(f"上农的各位老师好：\r\n    这是昨日的助贷流量的统计，请查收！\r\n    \r\n  {commit}\r\n  谢谢！"))
+        attr_out = MIMEText(open(os.path.join(CONF.ZIP_OUT, out), 'rb').read(), 'base64', 'utf-8')
+        attr_out['Content-Type'] = 'application/octet-stream'
+        attr_out.add_header('Content-Disposition', 'attachment', filename=('gbk', '', out))
+        message_out.attach(attr_out)
+        message_out['From'] = formataddr(["Public-数据推送", "publica@xwfintech.com"])
+        message_out['To'] = Header(';'.join(CONF.EMAIL_SRCB))
+        message_out['Subject'] = Header(out.split('.')[0], 'utf-8')
+        try:
+            smt_obj = smtplib.SMTP_SSL()
+            smt_obj.connect(CONF.MAIL_HOST, 465)
+            smt_obj.login(CONF.MAIL_USER, CONF.MAIL_PWD)
+            smt_obj.sendmail(CONF.MAIL_USER, CONF.EMAIL_SRCB, message_out.as_string())
+            logging.info(" 对外邮件发送成功 ")
+        except smtplib.SMTPException as e:
+            logging.error(f" 对外邮件发送失败-{e} ")
     return
 
 
@@ -499,8 +516,8 @@ def auto_run(fix=("HB",)):
     :return:
     """
     # 下载当天的所有附件
-    down = DownEmail()
-    down.run()
+    # down = DownEmail()
+    # down.run()
 
     # 处理数据的一套步骤
     filename = Utils.cob_filename(datetime.now())
@@ -527,49 +544,5 @@ def auto_run(fix=("HB",)):
     send_email(a, b)
 
 
-# 下载邮件附件
-def sub0_download_email():
-    dn = DownEmail()
-    dn.run()
-
-
-# 只生excel的步骤
-def sub1_genexcel():
-    # 处理数据的一套步骤
-    filename = Utils.cob_filename(datetime.now())
-    move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, filename)
-    xl_data = pd.read_excel(os.path.join(CONF.EXCEL_TAR_PATH, filename), header=1)
-    xl_data.replace(CONF.PROD_CODE, CONF.PROD_NAME, inplace=True)
-    # print(xl_data)
-    tool = Tool()
-    tool.gen_result(xl_data)
-    res = tool.get_result()
-    for k in res:
-        print(k, ":", res[k])
-    myexcel = MyExcel(res)
-    myexcel.append_row()
-
-
-# 校正放款成功的笔数,fix为哪个产品需要校正
-def sub2_fixexcel(fix="HB"):
-    # 校验放款成功数据的一套流程
-    fix_org_file = Utils.fix_filename(datetime.now())
-    move_cros_log(CONF.EXCEL_SOURCE_PATH, CONF.EXCEL_TAR_PATH, fix_org_file)
-    fix_inst = FixExcel(fix)
-    fix_inst.do_fix()
-
-
-# 压缩及发送邮件的函数
-def sub3_zipandemail():
-    a, b = zipfiles()
-    send_email(a, b)
-
-
 if __name__ == "__main__":
     auto_run()
-    # sub0_download_email()
-    # sub1_genexcel()
-    # sub2_fixexcel()
-    # sub3_zipandemail()
-
-    ...
