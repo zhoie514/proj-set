@@ -175,7 +175,7 @@ def CreateLogger(logFile, fmt='%(asctime)s|%(levelname)s|%(message)s', level=log
 
 
 if __name__ == '__main__':
-    sourceCode = "tpjf"
+    sourceCode = "msjr"
     #  测试公钥加密私钥解密是否可用
     myrsa = MyRSA(f"cases/{sourceCode.upper()}/KEYS/partner_pub_key",
                   f"cases/{sourceCode.upper()}/KEYS/partner_priv_key",
@@ -197,3 +197,5 @@ if __name__ == '__main__':
     print("私钥签名结果:", x1)
     y1 = myrsa.verify_sign(data=x, signature=x1, verify_key=myrsa.jinke_pub_key)
     print("公钥验签结果:", y1)
+    data_ = b""
+    sign_ = b"E1qFsiX+zIYVlz2rfo9NvC8WHthsXjFI675Vy6d5eI8CCTrQH86pRPgw3/lcsHMNRCHM7sC93R1As49WC9/63DB40dz+TIOqbbxezBTGs9CCFT+6Emppohl5rXwX7klgdL5ADJcQhjW7519qgGCOU9nhEaWBVLdH9s8ijMIOXABnVzThHx586Xo28kb12YxWq51XO9WOH6h0k6xC3zRoH6V4TIrPjdkXIbb42wOdg6zoR+izP3J82RZ0KLp9H40RRvFr3DRAOp9rv/gfhwDxnoRbjsSUd4iNvW+l5uJDUWHhLGZXb4JHfUWNWMn2YrVqBU31cv69/GhqAKRq8TFqGA=="

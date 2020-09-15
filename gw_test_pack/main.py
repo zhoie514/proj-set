@@ -29,7 +29,7 @@ sys.path.append(f"./cases/{PROD}")
 import sub_main
 import CONST_ARGS
 
-main_logging = CreateLogger(f'cases/{PROD}/log_schedu.log', level=CONST_ARGS.LOG_LEVEL)
+main_logging = CreateLogger(f'cases/{PROD}/main_logging.log', level=CONST_ARGS.LOG_LEVEL)
 # 是否通过网关 决定是否需要rsa加解密
 myrsa = None
 

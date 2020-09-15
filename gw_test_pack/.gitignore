@@ -1,3 +1,5 @@
 /cases/TPJF/
 ./log_main.txt
 /cases/HB/
+*.log
+/*/*/*.log
