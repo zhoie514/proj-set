@@ -3,3 +3,4 @@
 /cases/HB/
 *.log
 /*/*/*.log
+*.jgp
